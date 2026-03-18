@@ -23,7 +23,7 @@ export async function GET() {
       take: 5,
       orderBy: { updatedAt: "desc" },
       include: {
-        project: { select: { title: true } },
+        project: { select: { id: true, title: true } },
         assignedTo: { select: { name: true } },
       },
     });
@@ -54,7 +54,8 @@ export async function GET() {
       take: 5,
       orderBy: { updatedAt: "desc" },
       include: {
-        project: { select: { title: true } },
+        project: { select: { id: true, title: true } },
+        assignedTo: { select: { name: true } },
       },
     });
 
@@ -69,21 +70,16 @@ export async function GET() {
 
   if (user.role === "REVIEWER") {
     const [submittedForReview, reviewedByMe] = await Promise.all([
-      prisma.task.count({ where: { status: "SUBMITTED" } }),
-      prisma.task.count({ where: { reviewedById: user.id } }),
+      prisma.task.count({ where: { reviewedById: user.id, status: "SUBMITTED" } }),
+      prisma.task.count({ where: { reviewedById: user.id, status: { in: ["APPROVED", "REJECTED"] } } }),
     ]);
 
     const recentTasks = await prisma.task.findMany({
-      where: {
-        OR: [
-          { status: "SUBMITTED" },
-          { reviewedById: user.id },
-        ],
-      },
+      where: { reviewedById: user.id },
       take: 5,
       orderBy: { updatedAt: "desc" },
       include: {
-        project: { select: { title: true } },
+        project: { select: { id: true, title: true } },
         assignedTo: { select: { name: true } },
       },
     });

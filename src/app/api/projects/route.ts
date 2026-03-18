@@ -2,12 +2,39 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionOrUnauthorized, requireRole } from "@/lib/auth-helpers";
 import { createProjectSchema } from "@/lib/validations";
+import { logActivity } from "@/lib/activity";
 
-export async function GET() {
-  const { session, error } = await getSessionOrUnauthorized();
+export async function GET(request: Request) {
+  const { error } = await getSessionOrUnauthorized();
   if (error) return error;
 
+  const { searchParams } = new URL(request.url);
+  const search = searchParams.get("search") || "";
+  const lang = searchParams.get("lang") || "";
+
+  const where: Record<string, unknown> = {};
+
+  if (search) {
+    where.OR = [
+      { title: { contains: search, mode: "insensitive" } },
+      { description: { contains: search, mode: "insensitive" } },
+    ];
+  }
+
+  if (lang) {
+    where.OR = [
+      ...(Array.isArray(where.OR) ? where.OR : []),
+    ];
+    // Filter by source or target language
+    where.AND = [
+      ...(search ? [{ OR: where.OR }] : []),
+      { OR: [{ sourceLang: lang }, { targetLang: lang }] },
+    ];
+    if (search) delete where.OR;
+  }
+
   const projects = await prisma.project.findMany({
+    where: Object.keys(where).length > 0 ? where : undefined,
     include: {
       createdBy: { select: { id: true, name: true } },
       _count: { select: { tasks: true } },
@@ -37,6 +64,13 @@ export async function POST(request: Request) {
     include: {
       createdBy: { select: { id: true, name: true } },
     },
+  });
+
+  await logActivity({
+    action: "PROJECT_CREATED",
+    userId: session!.user.id,
+    detail: `Created project "${parsed.data.title}"`,
+    projectId: project.id,
   });
 
   return NextResponse.json(project, { status: 201 });

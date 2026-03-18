@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionOrUnauthorized } from "@/lib/auth-helpers";
 import { updateTaskSchema } from "@/lib/validations";
+import { logActivity } from "@/lib/activity";
 
 export async function GET(
   request: Request,
@@ -28,8 +29,8 @@ export async function GET(
   const user = session!.user;
   const hasAccess =
     user.role === "ADMIN" ||
-    task.assignedToId === user.id ||
-    task.reviewedById === user.id;
+    (user.role === "REVIEWER" && task.reviewedById === user.id) ||
+    (user.role === "TRANSLATOR" && task.assignedToId === user.id);
 
   if (!hasAccess) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -62,10 +63,25 @@ export async function PATCH(
 
   // Admin can update any field
   if (user.role === "ADMIN") {
+    const { dueDate, ...rest } = parsed.data;
     const updated = await prisma.task.update({
       where: { id },
-      data: parsed.data,
+      data: {
+        ...rest,
+        ...(dueDate !== undefined && { dueDate: dueDate ? new Date(dueDate) : null }),
+      },
     });
+
+    if (parsed.data.assignedToId !== undefined || parsed.data.reviewedById !== undefined) {
+      await logActivity({
+        action: "TASK_ASSIGNED",
+        userId: user.id,
+        detail: "Updated task assignment",
+        projectId: task.projectId,
+        taskId: id,
+      });
+    }
+
     return NextResponse.json(updated);
   }
 
@@ -76,6 +92,15 @@ export async function PATCH(
       where: { id },
       data: { translatedContent, status },
     });
+
+    await logActivity({
+      action: "TASK_SAVED",
+      userId: user.id,
+      detail: "Saved translation draft",
+      projectId: task.projectId,
+      taskId: id,
+    });
+
     return NextResponse.json(updated);
   }
 

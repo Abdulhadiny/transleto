@@ -41,8 +41,10 @@ model User {
 
   // Relations
   createdProjects Project[]
-  assignedTasks   Task[]    @relation("AssignedTasks")
-  reviewedTasks   Task[]    @relation("ReviewedTasks")
+  assignedTasks   Task[]        @relation("AssignedTasks")
+  reviewedTasks   Task[]        @relation("ReviewedTasks")
+  activityLogs    ActivityLog[]
+  comments        Comment[]
 }
 
 model Account {
@@ -104,10 +106,50 @@ model Task {
   assignedToId      String?
   reviewedById      String?
   reviewNote        String?    @db.Text
+  dueDate           DateTime?
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
 
-  project    Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  assignedTo User?   @relation("AssignedTasks", fields: [assignedToId], references: [id])
-  reviewedBy User?   @relation("ReviewedTasks", fields: [reviewedById], references: [id])
+  project    Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignedTo User?     @relation("AssignedTasks", fields: [assignedToId], references: [id])
+  reviewedBy User?     @relation("ReviewedTasks", fields: [reviewedById], references: [id])
+  comments   Comment[]
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  taskId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([taskId, createdAt])
+}
+
+enum ActivityAction {
+  PROJECT_CREATED
+  TASK_CREATED
+  TASK_ASSIGNED
+  TASK_SAVED
+  TASK_SUBMITTED
+  TASK_APPROVED
+  TASK_REJECTED
+  USER_CREATED
+}
+
+model ActivityLog {
+  id        String         @id @default(cuid())
+  action    ActivityAction
+  userId    String
+  detail    String         @db.Text
+  projectId String?
+  taskId    String?
+  createdAt DateTime       @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
 }

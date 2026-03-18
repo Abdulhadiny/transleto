@@ -3,9 +3,10 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth-helpers";
 import { registerSchema } from "@/lib/validations";
+import { logActivity } from "@/lib/activity";
 
 export async function POST(request: Request) {
-  const { error } = await requireRole("ADMIN");
+  const { session, error } = await requireRole("ADMIN");
   if (error) return error;
 
   const body = await request.json();
@@ -27,6 +28,12 @@ export async function POST(request: Request) {
   const user = await prisma.user.create({
     data: { name, email, hashedPassword, role },
     select: { id: true, name: true, email: true, role: true, createdAt: true },
+  });
+
+  await logActivity({
+    action: "USER_CREATED",
+    userId: session!.user.id,
+    detail: `Created user "${name}" (${role})`,
   });
 
   return NextResponse.json(user, { status: 201 });

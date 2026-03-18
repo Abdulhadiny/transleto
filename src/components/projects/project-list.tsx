@@ -18,8 +18,10 @@ interface Project {
 export function ProjectList({ projects }: { projects: Project[] }) {
   if (projects.length === 0) {
     return (
-      <div className="text-center py-12 text-gray-500">
-        No projects yet. Create one to get started.
+      <div className="flex flex-col items-center py-16 text-center">
+        <div className="text-4xl text-gray-300 mb-3">&#128218;</div>
+        <p className="text-sm font-medium text-gray-500">No projects yet</p>
+        <p className="text-xs text-gray-400 mt-1">Create one to get started.</p>
       </div>
     );
   }
@@ -29,7 +31,7 @@ export function ProjectList({ projects }: { projects: Project[] }) {
       {projects.map((project) => (
         <Link key={project.id} href={`/dashboard/projects/${project.id}`}>
           <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="flex items-center justify-between">
+            <CardContent className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <h3 className="font-semibold text-gray-900">{project.title}</h3>
                 {project.description && (

@@ -8,6 +8,8 @@ import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/tasks/status-badge";
 import { TranslationEditor } from "@/components/tasks/translation-editor";
 import { ReviewPanel } from "@/components/tasks/review-panel";
+import { TaskAssign } from "@/components/tasks/task-assign";
+import { CommentThread } from "@/components/tasks/comment-thread";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TaskStatus } from "@prisma/client";
 
@@ -17,6 +19,7 @@ interface Task {
   translatedContent?: string | null;
   status: TaskStatus;
   reviewNote?: string | null;
+  dueDate?: string | null;
   assignedTo?: { id: string; name: string } | null;
   reviewedBy?: { id: string; name: string } | null;
   project: { id: string; title: string };
@@ -72,11 +75,37 @@ export default function TaskDetailPage() {
           <h1 className="text-2xl font-bold">Task Detail</h1>
           <StatusBadge status={task.status} />
         </div>
-        <div className="flex gap-4 mt-2 text-sm text-gray-500">
+        <div className="flex flex-wrap gap-4 mt-2 text-sm text-gray-500">
           <span>Translator: {task.assignedTo?.name || "Unassigned"}</span>
           <span>Reviewer: {task.reviewedBy?.name || "Unassigned"}</span>
+          {task.dueDate && (
+            <span className={
+              new Date(task.dueDate) < new Date() && task.status !== "APPROVED"
+                ? "text-red-600 font-medium"
+                : ""
+            }>
+              Due: {new Date(task.dueDate).toLocaleDateString()}
+            </span>
+          )}
         </div>
       </div>
+
+      {role === "ADMIN" && (
+        <Card>
+          <CardHeader>
+            <h2 className="text-lg font-semibold">Assignment</h2>
+          </CardHeader>
+          <CardContent>
+            <TaskAssign
+              taskId={task.id}
+              currentTranslatorId={task.assignedTo?.id}
+              currentReviewerId={task.reviewedBy?.id}
+              currentDueDate={task.dueDate}
+              onUpdate={fetchTask}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
@@ -100,6 +129,7 @@ export default function TaskDetailPage() {
               originalContent={task.originalContent}
               translatedContent={task.translatedContent}
               status={task.status}
+              reviewNote={task.reviewNote}
               onUpdate={fetchTask}
             />
           ) : (
@@ -122,6 +152,15 @@ export default function TaskDetailPage() {
               </div>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <h2 className="text-lg font-semibold">Discussion</h2>
+        </CardHeader>
+        <CardContent>
+          <CommentThread taskId={task.id} />
         </CardContent>
       </Card>
     </div>

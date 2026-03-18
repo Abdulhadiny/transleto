@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionOrUnauthorized } from "@/lib/auth-helpers";
 import { reviewTaskSchema } from "@/lib/validations";
+import { logActivity } from "@/lib/activity";
 
 export async function PATCH(
   request: Request,
@@ -22,6 +23,10 @@ export async function PATCH(
     return NextResponse.json({ error: "Task not found" }, { status: 404 });
   }
 
+  if (task.reviewedById && task.reviewedById !== user.id) {
+    return NextResponse.json({ error: "You are not assigned to review this task" }, { status: 403 });
+  }
+
   if (task.status !== "SUBMITTED") {
     return NextResponse.json({ error: "Task is not submitted for review" }, { status: 400 });
   }
@@ -33,7 +38,7 @@ export async function PATCH(
     return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
   }
 
-  const { status, reviewNote } = parsed.data;
+  const { status, reviewNote, translatedContent } = parsed.data;
 
   if (status === "REJECTED" && !reviewNote) {
     return NextResponse.json({ error: "Review note required for rejection" }, { status: 400 });
@@ -42,10 +47,21 @@ export async function PATCH(
   const updated = await prisma.task.update({
     where: { id },
     data: {
-      status,
+      status: status === "REJECTED" ? "REJECTED" : "APPROVED",
       reviewedById: user.id,
       reviewNote: reviewNote || null,
+      ...(translatedContent !== undefined && { translatedContent }),
     },
+  });
+
+  await logActivity({
+    action: status === "APPROVED" ? "TASK_APPROVED" : "TASK_REJECTED",
+    userId: user.id,
+    detail: status === "APPROVED"
+      ? "Approved translation"
+      : `Rejected translation: ${reviewNote}`,
+    projectId: task.projectId,
+    taskId: id,
   });
 
   return NextResponse.json(updated);

@@ -35,6 +35,7 @@ export const createTaskSchema = z.object({
   originalContent: z.string().min(1, "Content is required"),
   assignedToId: z.string().optional(),
   reviewedById: z.string().optional(),
+  dueDate: z.string().datetime({ offset: true }).optional().or(z.string().date().optional()),
 });
 
 export const updateTaskSchema = z.object({
@@ -42,6 +43,7 @@ export const updateTaskSchema = z.object({
   status: z.enum(["NOT_STARTED", "IN_PROGRESS", "SUBMITTED", "APPROVED", "REJECTED"]).optional(),
   assignedToId: z.string().nullable().optional(),
   reviewedById: z.string().nullable().optional(),
+  dueDate: z.string().datetime({ offset: true }).nullable().optional().or(z.string().date().nullable().optional()),
 });
 
 export const submitTaskSchema = z.object({
@@ -51,4 +53,5 @@ export const submitTaskSchema = z.object({
 export const reviewTaskSchema = z.object({
   status: z.enum(["APPROVED", "REJECTED"]),
   reviewNote: z.string().optional(),
+  translatedContent: z.string().optional(),
 });

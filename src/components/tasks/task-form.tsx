@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 
@@ -48,6 +49,7 @@ export function TaskForm({
         originalContent: formData.get("originalContent"),
         assignedToId: formData.get("assignedToId") || undefined,
         reviewedById: formData.get("reviewedById") || undefined,
+        dueDate: formData.get("dueDate") || undefined,
       }),
     });
 
@@ -78,7 +80,7 @@ export function TaskForm({
         rows={3}
       />
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Select
           id="assignedToId"
           name="assignedToId"
@@ -96,6 +98,12 @@ export function TaskForm({
             { value: "", label: "Unassigned" },
             ...reviewers.map((u) => ({ value: u.id, label: u.name })),
           ]}
+        />
+        <Input
+          id="dueDate"
+          name="dueDate"
+          label="Due Date"
+          type="date"
         />
       </div>
 

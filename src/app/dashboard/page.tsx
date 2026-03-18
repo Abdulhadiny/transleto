@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { StatCard } from "@/components/dashboard/stats-cards";
 import { RecentTasks } from "@/components/dashboard/recent-tasks";
+import { ActivityFeed } from "@/components/dashboard/activity-feed";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DashboardPage() {
@@ -41,7 +42,14 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Dashboard</h1>
+      <div>
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        {session?.user?.name && (
+          <p className="text-sm text-gray-500 mt-1">
+            Welcome back, {session.user.name}
+          </p>
+        )}
+      </div>
 
       {role === "ADMIN" && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -87,8 +95,11 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      <RecentTasks tasks={(stats.recentTasks as any[]) || []} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+        <RecentTasks tasks={(stats.recentTasks as any[]) || []} />
+        <ActivityFeed />
+      </div>
     </div>
   );
 }

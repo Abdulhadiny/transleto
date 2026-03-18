@@ -7,16 +7,39 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { error } = await getSessionOrUnauthorized();
+  const { session, error } = await getSessionOrUnauthorized();
   if (error) return error;
 
   const { id } = await params;
+  const user = session!.user;
+
+  const { searchParams } = new URL(request.url);
+  const status = searchParams.get("status") || "";
+  const assignedTo = searchParams.get("assignedTo") || "";
+  const search = searchParams.get("search") || "";
+
+  const taskWhere: Record<string, unknown> = {};
+  if (status) taskWhere.status = status;
+  if (assignedTo) taskWhere.assignedToId = assignedTo;
+  if (search) {
+    taskWhere.originalContent = { contains: search, mode: "insensitive" };
+  }
+
+  // Translators only see tasks assigned to them
+  if (user.role === "TRANSLATOR") {
+    taskWhere.assignedToId = user.id;
+  }
+  // Reviewers only see tasks assigned to them for review
+  if (user.role === "REVIEWER") {
+    taskWhere.reviewedById = user.id;
+  }
 
   const project = await prisma.project.findUnique({
     where: { id },
     include: {
       createdBy: { select: { id: true, name: true } },
       tasks: {
+        where: Object.keys(taskWhere).length > 0 ? taskWhere : undefined,
         include: {
           assignedTo: { select: { id: true, name: true } },
           reviewedBy: { select: { id: true, name: true } },
