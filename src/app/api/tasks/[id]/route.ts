@@ -1,0 +1,83 @@
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { getSessionOrUnauthorized } from "@/lib/auth-helpers";
+import { updateTaskSchema } from "@/lib/validations";
+
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { session, error } = await getSessionOrUnauthorized();
+  if (error) return error;
+
+  const { id } = await params;
+
+  const task = await prisma.task.findUnique({
+    where: { id },
+    include: {
+      project: true,
+      assignedTo: { select: { id: true, name: true } },
+      reviewedBy: { select: { id: true, name: true } },
+    },
+  });
+
+  if (!task) {
+    return NextResponse.json({ error: "Task not found" }, { status: 404 });
+  }
+
+  const user = session!.user;
+  const hasAccess =
+    user.role === "ADMIN" ||
+    task.assignedToId === user.id ||
+    task.reviewedById === user.id;
+
+  if (!hasAccess) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  return NextResponse.json(task);
+}
+
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { session, error } = await getSessionOrUnauthorized();
+  if (error) return error;
+
+  const { id } = await params;
+  const body = await request.json();
+  const parsed = updateTaskSchema.safeParse(body);
+
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
+  }
+
+  const task = await prisma.task.findUnique({ where: { id } });
+  if (!task) {
+    return NextResponse.json({ error: "Task not found" }, { status: 404 });
+  }
+
+  const user = session!.user;
+
+  // Admin can update any field
+  if (user.role === "ADMIN") {
+    const updated = await prisma.task.update({
+      where: { id },
+      data: parsed.data,
+    });
+    return NextResponse.json(updated);
+  }
+
+  // Translator can only update translatedContent and status
+  if (user.role === "TRANSLATOR" && task.assignedToId === user.id) {
+    const { translatedContent, status } = parsed.data;
+    const updated = await prisma.task.update({
+      where: { id },
+      data: { translatedContent, status },
+    });
+    return NextResponse.json(updated);
+  }
+
+  return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+}
