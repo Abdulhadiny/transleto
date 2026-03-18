@@ -16,16 +16,22 @@ type ParseMode = "line" | "csv";
 function parseContent(text: string, mode: ParseMode): string[] {
   if (mode === "csv") {
     const lines = text.split("\n").filter((l) => l.trim());
-    // Skip header row if it looks like one
-    const start = lines.length > 0 && /^["']?(content|text|original)/i.test(lines[0]) ? 1 : 0;
-    return lines.slice(start).map((line) => {
-      // Take the first column, handle quoted values
-      const match = line.match(/^"([^"]*)"/) || line.match(/^([^,]*)/);
-      return match ? match[1].trim() : line.trim();
-    }).filter(Boolean);
+    const start =
+      lines.length > 0 && /^["']?(content|text|original)/i.test(lines[0])
+        ? 1
+        : 0;
+    return lines
+      .slice(start)
+      .map((line) => {
+        const match = line.match(/^"([^"]*)"/) || line.match(/^([^,]*)/);
+        return match ? match[1].trim() : line.trim();
+      })
+      .filter(Boolean);
   }
-  // Line mode: each non-empty line is a task
-  return text.split("\n").map((l) => l.trim()).filter(Boolean);
+  return text
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
 }
 
 export function BulkUpload({
@@ -46,7 +52,9 @@ export function BulkUpload({
   useEffect(() => {
     fetch("/api/users")
       .then((res) => res.json())
-      .then((data) => { if (Array.isArray(data)) setUsers(data); })
+      .then((data) => {
+        if (Array.isArray(data)) setUsers(data);
+      })
       .catch(() => {});
   }, []);
 
@@ -117,40 +125,60 @@ export function BulkUpload({
   const reviewers = users.filter((u) => u.role === "REVIEWER");
 
   return (
-    <form onSubmit={handleUpload} className="space-y-4">
+    <form onSubmit={handleUpload} className="space-y-5">
       {error && (
-        <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</div>
+        <div className="flex items-center gap-2 rounded-lg bg-rose-50 border border-rose-200/60 px-4 py-3 text-sm text-rose-700">
+          {error}
+        </div>
       )}
       {success && (
-        <div className="rounded-md bg-green-50 p-3 text-sm text-green-600">{success}</div>
+        <div className="flex items-center gap-2 rounded-lg bg-teal-50 border border-teal-200/60 px-4 py-3 text-sm text-teal-700">
+          <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
+          </svg>
+          {success}
+        </div>
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-stone-600 mb-1.5">
           Upload File (.txt or .csv)
         </label>
-        <input
-          ref={fileRef}
-          type="file"
-          accept=".txt,.csv"
-          onChange={handleFileChange}
-          className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-md file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-100"
-        />
-        <p className="mt-1 text-xs text-gray-400">
+        <div className="flex items-center gap-3">
+          <label className="inline-flex items-center gap-2 rounded-lg border border-stone-200 bg-white px-4 py-2.5 text-sm font-medium text-stone-600 hover:bg-stone-50 hover:border-stone-300 transition-all cursor-pointer">
+            <svg className="w-4 h-4 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+            </svg>
+            Choose file
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".txt,.csv"
+              onChange={handleFileChange}
+              className="sr-only"
+            />
+          </label>
+          {preview.length > 0 && (
+            <span className="text-sm text-stone-500">
+              {preview.length} tasks detected
+            </span>
+          )}
+        </div>
+        <p className="mt-1.5 text-xs text-stone-400">
           .txt: one task per line &middot; .csv: first column used as content
         </p>
       </div>
 
       {preview.length > 0 && (
         <div>
-          <p className="text-sm font-medium text-gray-700 mb-1">
+          <p className="text-sm font-medium text-stone-600 mb-1.5">
             Preview ({preview.length} tasks) — {mode === "csv" ? "CSV" : "line-by-line"} mode
           </p>
-          <div className="max-h-48 overflow-y-auto rounded-md border border-gray-200 bg-gray-50">
-            <ul className="divide-y divide-gray-200">
+          <div className="max-h-48 overflow-y-auto rounded-lg border border-stone-200 bg-stone-50">
+            <ul className="divide-y divide-stone-200/60">
               {preview.map((item, i) => (
-                <li key={i} className="px-3 py-2 text-sm text-gray-700">
-                  <span className="text-gray-400 mr-2">{i + 1}.</span>
+                <li key={i} className="px-4 py-2.5 text-sm text-stone-700">
+                  <span className="text-stone-400 tabular-nums mr-2">{i + 1}.</span>
                   {item.length > 120 ? item.substring(0, 120) + "..." : item}
                 </li>
               ))}

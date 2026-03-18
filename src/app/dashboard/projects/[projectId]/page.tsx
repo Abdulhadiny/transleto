@@ -77,15 +77,19 @@ export default function ProjectDetailPage() {
   if (loading && !project) {
     return (
       <div className="space-y-6">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-32" />
-        <Skeleton className="h-48" />
+        <Skeleton className="h-8 w-64 rounded-lg" />
+        <Skeleton className="h-32 rounded-xl" />
+        <Skeleton className="h-48 rounded-xl" />
       </div>
     );
   }
 
   if (!project || !project.createdBy) {
-    return <p className="text-gray-500">Project not found.</p>;
+    return (
+      <div className="flex flex-col items-center py-20 text-center">
+        <p className="text-stone-500">Project not found.</p>
+      </div>
+    );
   }
 
   const isAdmin = session?.user?.role === "ADMIN";
@@ -112,7 +116,7 @@ export default function ProjectDetailPage() {
       a.remove();
       URL.revokeObjectURL(url);
     } catch {
-      // silent fail — could add toast later
+      // silent fail
     } finally {
       setExporting(false);
     }
@@ -120,14 +124,15 @@ export default function ProjectDetailPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">{project.title}</h1>
+      {/* Project header */}
+      <div className="animate-fade-up">
+        <h1 className="text-2xl font-bold text-stone-900">{project.title}</h1>
         {project.description && (
-          <p className="mt-1 text-gray-500">{project.description}</p>
+          <p className="mt-1 text-sm text-stone-500">{project.description}</p>
         )}
-        <div className="flex items-center gap-2 mt-2">
+        <div className="flex items-center gap-3 mt-3">
           <Badge>{project.sourceLang} → {project.targetLang}</Badge>
-          <span className="text-sm text-gray-400">
+          <span className="text-xs text-stone-400">
             Created by {project.createdBy?.name ?? "Unknown"}
           </span>
         </div>
@@ -137,7 +142,7 @@ export default function ProjectDetailPage() {
         <>
           <Card>
             <CardHeader>
-              <h2 className="text-lg font-semibold">Add Task</h2>
+              <h2 className="text-sm font-semibold text-stone-900">Add Task</h2>
             </CardHeader>
             <CardContent>
               <TaskForm projectId={projectId} onCreated={fetchProject} />
@@ -146,7 +151,7 @@ export default function ProjectDetailPage() {
 
           <Card>
             <CardHeader>
-              <h2 className="text-lg font-semibold">Bulk Upload Tasks</h2>
+              <h2 className="text-sm font-semibold text-stone-900">Bulk Upload Tasks</h2>
             </CardHeader>
             <CardContent>
               <BulkUpload projectId={projectId} onCreated={fetchProject} />
@@ -155,12 +160,12 @@ export default function ProjectDetailPage() {
 
           <Card>
             <CardHeader>
-              <h2 className="text-lg font-semibold">Export Translations</h2>
+              <h2 className="text-sm font-semibold text-stone-900">Export Translations</h2>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-end">
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Format</label>
+                  <label className="block text-sm font-medium text-stone-600 mb-1.5">Format</label>
                   <Select
                     options={[
                       { value: "csv", label: "CSV" },
@@ -172,7 +177,7 @@ export default function ProjectDetailPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Status Filter</label>
+                  <label className="block text-sm font-medium text-stone-600 mb-1.5">Status Filter</label>
                   <Select
                     options={[
                       { value: "APPROVED", label: "Approved Only" },
@@ -185,7 +190,10 @@ export default function ProjectDetailPage() {
                     className="w-40"
                   />
                 </div>
-                <Button onClick={handleExport} disabled={exporting}>
+                <Button onClick={handleExport} disabled={exporting} variant="secondary">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                  </svg>
                   {exporting ? "Exporting..." : "Download"}
                 </Button>
               </div>
@@ -194,10 +202,11 @@ export default function ProjectDetailPage() {
         </>
       )}
 
+      {/* Tasks section */}
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <h2 className="text-lg font-semibold">
+            <h2 className="text-sm font-semibold text-stone-900">
               Tasks ({project.tasks?.length ?? 0})
             </h2>
             <div className="flex flex-col sm:flex-row gap-2">

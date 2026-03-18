@@ -24,14 +24,20 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
+      <div className="space-y-8">
+        <div>
+          <Skeleton className="h-8 w-48 mb-2" />
+          <Skeleton className="h-4 w-64" />
+        </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-24" />
+            <Skeleton key={i} className="h-28 rounded-xl" />
           ))}
         </div>
-        <Skeleton className="h-64" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Skeleton className="h-72 rounded-xl" />
+          <Skeleton className="h-72 rounded-xl" />
+        </div>
       </div>
     );
   }
@@ -41,61 +47,87 @@ export default function DashboardPage() {
   const role = session?.user?.role;
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Dashboard</h1>
+    <div className="space-y-8">
+      <div className="animate-fade-up">
+        <h1 className="text-2xl font-bold text-stone-900">Dashboard</h1>
         {session?.user?.name && (
-          <p className="text-sm text-gray-500 mt-1">
-            Welcome back, {session.user.name}
+          <p className="text-sm text-stone-400 mt-1">
+            Welcome back, <span className="text-stone-600">{session.user.name}</span>
           </p>
         )}
       </div>
 
       {role === "ADMIN" && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard title="Total Projects" value={stats.totalProjects as number} />
-          <StatCard title="Total Tasks" value={stats.totalTasks as number} />
-          <StatCard title="Total Users" value={stats.totalUsers as number} />
-          <StatCard
-            title="Submitted"
-            value={(stats.tasksByStatus as Record<string, number>)?.SUBMITTED || 0}
-            description="Awaiting review"
-          />
+          <div className="animate-fade-up stagger-1">
+            <StatCard title="Total Projects" value={stats.totalProjects as number} accent="amber" />
+          </div>
+          <div className="animate-fade-up stagger-2">
+            <StatCard title="Total Tasks" value={stats.totalTasks as number} accent="sky" />
+          </div>
+          <div className="animate-fade-up stagger-3">
+            <StatCard title="Total Users" value={stats.totalUsers as number} accent="teal" />
+          </div>
+          <div className="animate-fade-up stagger-4">
+            <StatCard
+              title="Submitted"
+              value={(stats.tasksByStatus as Record<string, number>)?.SUBMITTED || 0}
+              description="Awaiting review"
+              accent="rose"
+            />
+          </div>
         </div>
       )}
 
       {role === "TRANSLATOR" && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard title="Assigned Tasks" value={stats.assignedTasks as number} />
-          <StatCard
-            title="In Progress"
-            value={(stats.tasksByStatus as Record<string, number>)?.IN_PROGRESS || 0}
-          />
-          <StatCard
-            title="Submitted"
-            value={(stats.tasksByStatus as Record<string, number>)?.SUBMITTED || 0}
-          />
-          <StatCard
-            title="Approved"
-            value={(stats.tasksByStatus as Record<string, number>)?.APPROVED || 0}
-          />
+          <div className="animate-fade-up stagger-1">
+            <StatCard title="Assigned Tasks" value={stats.assignedTasks as number} accent="amber" />
+          </div>
+          <div className="animate-fade-up stagger-2">
+            <StatCard
+              title="In Progress"
+              value={(stats.tasksByStatus as Record<string, number>)?.IN_PROGRESS || 0}
+              accent="sky"
+            />
+          </div>
+          <div className="animate-fade-up stagger-3">
+            <StatCard
+              title="Submitted"
+              value={(stats.tasksByStatus as Record<string, number>)?.SUBMITTED || 0}
+              accent="amber"
+            />
+          </div>
+          <div className="animate-fade-up stagger-4">
+            <StatCard
+              title="Approved"
+              value={(stats.tasksByStatus as Record<string, number>)?.APPROVED || 0}
+              accent="teal"
+            />
+          </div>
         </div>
       )}
 
       {role === "REVIEWER" && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <StatCard
-            title="Pending Review"
-            value={stats.submittedForReview as number}
-          />
-          <StatCard
-            title="Reviewed by Me"
-            value={stats.reviewedByMe as number}
-          />
+          <div className="animate-fade-up stagger-1">
+            <StatCard
+              title="Pending Review"
+              value={stats.submittedForReview as number}
+              accent="amber"
+            />
+          </div>
+          <div className="animate-fade-up stagger-2">
+            <StatCard
+              title="Reviewed by Me"
+              value={stats.reviewedByMe as number}
+              accent="teal"
+            />
+          </div>
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-up" style={{ animationDelay: "0.25s" }}>
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         <RecentTasks tasks={(stats.recentTasks as any[]) || []} />
         <ActivityFeed />

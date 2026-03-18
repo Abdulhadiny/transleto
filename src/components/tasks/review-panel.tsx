@@ -61,26 +61,38 @@ export function ReviewPanel({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {error && (
-        <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</div>
-      )}
-
-      {isFinalized && reviewNote && (
-        <div className={`rounded-md border p-3 ${status === "APPROVED" ? "bg-green-50 border-green-200" : "bg-yellow-50 border-yellow-200"}`}>
-          <p className="text-sm font-medium text-gray-800">
-            Review Note <Badge variant={status === "APPROVED" ? "success" : "danger"}>{status}</Badge>
-          </p>
-          <p className="text-sm text-gray-600 mt-1">{reviewNote}</p>
+        <div className="flex items-center gap-2 rounded-lg bg-rose-50 border border-rose-200/60 px-4 py-3 text-sm text-rose-700">
+          <svg className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
+          </svg>
+          {error}
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {isFinalized && reviewNote && (
+        <div className={`flex gap-3 rounded-lg border px-4 py-3 ${
+          status === "APPROVED"
+            ? "bg-teal-50 border-teal-200/60"
+            : "bg-amber-50 border-amber-200/60"
+        }`}>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <p className="text-sm font-medium text-stone-800">Review Note</p>
+              <Badge variant={status === "APPROVED" ? "success" : "danger"}>{status}</Badge>
+            </div>
+            <p className="text-sm text-stone-600">{reviewNote}</p>
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-stone-600 mb-1.5">
             Original Content
           </label>
-          <div className="rounded-md border border-gray-300 bg-gray-50 p-3 text-sm min-h-[120px] whitespace-pre-wrap">
+          <div className="rounded-lg border border-stone-200 bg-stone-50 p-4 text-sm min-h-[160px] whitespace-pre-wrap text-stone-700 leading-relaxed">
             {originalContent}
           </div>
         </div>
@@ -92,13 +104,14 @@ export function ReviewPanel({
             onChange={(e) => setEditedTranslation(e.target.value)}
             rows={6}
             placeholder="Edit translation if needed..."
+            className="min-h-[160px]"
           />
         ) : (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-stone-600 mb-1.5">
               Translation
             </label>
-            <div className="rounded-md border border-gray-300 bg-blue-50 p-3 text-sm min-h-[120px] whitespace-pre-wrap">
+            <div className="rounded-lg border border-sky-200 bg-sky-50 p-4 text-sm min-h-[160px] whitespace-pre-wrap text-stone-700 leading-relaxed">
               {translatedContent || "No translation provided yet."}
             </div>
           </div>
@@ -115,7 +128,7 @@ export function ReviewPanel({
             rows={3}
           />
 
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <Button
               onClick={() => handleReview("APPROVED")}
               disabled={loading}

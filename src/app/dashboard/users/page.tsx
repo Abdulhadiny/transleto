@@ -35,11 +35,14 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">User Management</h1>
+      <div className="animate-fade-up">
+        <h1 className="text-2xl font-bold text-stone-900">User Management</h1>
+        <p className="text-sm text-stone-400 mt-0.5">Create and manage team members</p>
+      </div>
 
       <Card>
         <CardHeader>
-          <h2 className="text-lg font-semibold">Create New User</h2>
+          <h2 className="text-sm font-semibold text-stone-900">Create New User</h2>
         </CardHeader>
         <CardContent>
           <UserForm onCreated={fetchUsers} />
@@ -48,13 +51,13 @@ export default function UsersPage() {
 
       <Card>
         <CardHeader>
-          <h2 className="text-lg font-semibold">All Users</h2>
+          <h2 className="text-sm font-semibold text-stone-900">All Users</h2>
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
-            <div className="p-4 space-y-2">
+            <div className="p-6 space-y-3">
               {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-12" />
+                <Skeleton key={i} className="h-12 rounded-lg" />
               ))}
             </div>
           ) : (

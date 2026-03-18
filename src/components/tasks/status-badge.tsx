@@ -1,7 +1,10 @@
 import { TaskStatus } from "@prisma/client";
 import { Badge } from "@/components/ui/badge";
 
-const statusConfig: Record<TaskStatus, { label: string; variant: "default" | "success" | "warning" | "danger" | "info" }> = {
+const statusConfig: Record<
+  TaskStatus,
+  { label: string; variant: "default" | "success" | "warning" | "danger" | "info" }
+> = {
   NOT_STARTED: { label: "Not Started", variant: "default" },
   IN_PROGRESS: { label: "In Progress", variant: "info" },
   SUBMITTED: { label: "Submitted", variant: "warning" },

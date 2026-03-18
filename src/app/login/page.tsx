@@ -34,49 +34,130 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-gray-100 px-4">
-      <div className="w-full max-w-md space-y-8 rounded-xl bg-white p-8 shadow-lg">
-        <div className="text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-lg bg-blue-600 text-white text-xl font-bold">
-            T
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900">Transleto</h1>
-          <p className="mt-2 text-sm text-gray-600">
-            Translation Workflow Management
-          </p>
+    <div className="flex min-h-screen">
+      {/* Left panel — decorative */}
+      <div className="hidden lg:flex lg:w-[45%] relative bg-gray-900 items-center justify-center overflow-hidden">
+        {/* Abstract pattern */}
+        <div className="absolute inset-0">
+          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900" />
+          <div className="absolute top-1/4 -left-20 w-96 h-96 rounded-full bg-amber-500/[0.07] blur-3xl" />
+          <div className="absolute bottom-1/4 -right-20 w-80 h-80 rounded-full bg-amber-600/[0.05] blur-3xl" />
+          {/* Grid pattern */}
+          <svg className="absolute inset-0 w-full h-full opacity-[0.03]" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="1"/>
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid)" />
+          </svg>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {error && (
-            <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
-              {error}
+        <div className="relative z-10 px-12 max-w-md">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/15 backdrop-blur-sm border border-amber-500/10">
+              <span className="text-amber-400 font-bold text-lg">T</span>
             </div>
-          )}
+            <span className="font-serif text-2xl font-semibold text-white tracking-tight">
+              Transleto
+            </span>
+          </div>
+          <h2 className="font-serif text-3xl font-medium text-white/90 leading-snug mb-4">
+            Craft precise translations,{" "}
+            <span className="italic text-amber-300/80">together.</span>
+          </h2>
+          <p className="text-gray-400 text-sm leading-relaxed">
+            A professional workflow for managing translation projects from draft to
+            approval. Assign tasks, review submissions, and deliver quality at scale.
+          </p>
+          <div className="mt-12 flex items-center gap-6 text-xs text-gray-500">
+            <div className="flex items-center gap-2">
+              <div className="h-1.5 w-1.5 rounded-full bg-teal-400" />
+              Assign &amp; Track
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+              Review &amp; Approve
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="h-1.5 w-1.5 rounded-full bg-sky-400" />
+              Export &amp; Deliver
+            </div>
+          </div>
+        </div>
+      </div>
 
-          <Input
-            id="email"
-            label="Email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            placeholder="admin@transleto.com"
-          />
+      {/* Right panel — form */}
+      <div className="flex flex-1 items-center justify-center px-6 py-12 bg-warm-white">
+        <div className="w-full max-w-sm">
+          {/* Mobile brand */}
+          <div className="flex items-center gap-2.5 mb-8 lg:hidden">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500/10">
+              <span className="text-amber-600 font-bold text-sm">T</span>
+            </div>
+            <span className="font-serif text-xl font-semibold text-stone-900 tracking-tight">
+              Transleto
+            </span>
+          </div>
 
-          <Input
-            id="password"
-            label="Password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            placeholder="Enter your password"
-          />
+          <div className="mb-8">
+            <h1 className="text-2xl font-semibold text-stone-900">
+              Welcome back
+            </h1>
+            <p className="mt-1.5 text-sm text-stone-500">
+              Sign in to your account to continue
+            </p>
+          </div>
 
-          <Button type="submit" disabled={loading} className="w-full">
-            {loading ? "Signing in..." : "Sign in"}
-          </Button>
-        </form>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {error && (
+              <div className="flex items-center gap-2 rounded-lg bg-rose-50 border border-rose-200/60 px-4 py-3 text-sm text-rose-700">
+                <svg className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
+                </svg>
+                {error}
+              </div>
+            )}
+
+            <Input
+              id="email"
+              label="Email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              placeholder="you@example.com"
+            />
+
+            <Input
+              id="password"
+              label="Password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              placeholder="Enter your password"
+            />
+
+            <Button type="submit" disabled={loading} className="w-full h-11">
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Signing in...
+                </span>
+              ) : (
+                "Sign in"
+              )}
+            </Button>
+          </form>
+
+          <p className="mt-8 text-center text-xs text-stone-400">
+            Translation Workflow Management System
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -47,10 +47,18 @@ export default function ProjectsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Projects</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-stone-900">Projects</h1>
+          <p className="text-sm text-stone-400 mt-0.5">Manage your translation projects</p>
+        </div>
         {session?.user?.role === "ADMIN" && (
           <Link href="/dashboard/projects/new">
-            <Button>New Project</Button>
+            <Button>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              New Project
+            </Button>
           </Link>
         )}
       </div>
@@ -63,7 +71,7 @@ export default function ProjectsPage() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <div className="w-full sm:w-48">
+        <div className="w-full sm:w-52">
           <Select
             options={languageOptions}
             value={lang}
@@ -73,9 +81,9 @@ export default function ProjectsPage() {
       </div>
 
       {loading ? (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-24" />
+            <Skeleton key={i} className="h-24 rounded-xl" />
           ))}
         </div>
       ) : (
