@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSessionOrUnauthorized } from "@/lib/auth-helpers";
 import { updateTaskSchema } from "@/lib/validations";
 import { logActivity } from "@/lib/activity";
+import { createNotification } from "@/lib/notifications";
 
 export async function GET(
   request: Request,
@@ -80,6 +81,18 @@ export async function PATCH(
         projectId: task.projectId,
         taskId: id,
       });
+
+      if (parsed.data.assignedToId && parsed.data.assignedToId !== task.assignedToId) {
+        const project = await prisma.project.findUnique({ where: { id: task.projectId }, select: { title: true } });
+        await createNotification({
+          type: "TASK_ASSIGNED",
+          userId: parsed.data.assignedToId,
+          message: `You were assigned to task "${task.originalContent.slice(0, 50)}${task.originalContent.length > 50 ? "..." : ""}" in project "${project?.title}"`,
+          actorId: user.id,
+          taskId: id,
+          projectId: task.projectId,
+        });
+      }
     }
 
     return NextResponse.json(updated);

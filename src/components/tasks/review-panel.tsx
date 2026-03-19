@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/tasks/status-badge";
+import { TaskStatus } from "@prisma/client";
 
 interface ReviewPanelProps {
   taskId: string;
@@ -80,7 +81,7 @@ export function ReviewPanel({
           <div className="min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <p className="text-sm font-medium text-stone-800">Review Note</p>
-              <Badge variant={status === "APPROVED" ? "success" : "danger"}>{status}</Badge>
+              <StatusBadge status={status as TaskStatus} />
             </div>
             <p className="text-sm text-stone-600">{reviewNote}</p>
           </div>

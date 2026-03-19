@@ -17,8 +17,11 @@ export async function GET(
   const status = searchParams.get("status") || "";
   const assignedTo = searchParams.get("assignedTo") || "";
   const search = searchParams.get("search") || "";
+  const taskPage = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+  const taskPageSize = Math.min(100, Math.max(1, parseInt(searchParams.get("pageSize") || "20", 10)));
+  const skip = (taskPage - 1) * taskPageSize;
 
-  const taskWhere: Record<string, unknown> = {};
+  const taskWhere: Record<string, unknown> = { projectId: id };
   if (status) taskWhere.status = status;
   if (assignedTo) taskWhere.assignedToId = assignedTo;
   if (search) {
@@ -34,26 +37,35 @@ export async function GET(
     taskWhere.reviewedById = user.id;
   }
 
-  const project = await prisma.project.findUnique({
-    where: { id },
-    include: {
-      createdBy: { select: { id: true, name: true } },
-      tasks: {
-        where: Object.keys(taskWhere).length > 0 ? taskWhere : undefined,
-        include: {
-          assignedTo: { select: { id: true, name: true } },
-          reviewedBy: { select: { id: true, name: true } },
-        },
-        orderBy: { createdAt: "desc" },
+  const [project, tasks, taskTotal] = await Promise.all([
+    prisma.project.findUnique({
+      where: { id },
+      include: {
+        createdBy: { select: { id: true, name: true } },
       },
-    },
-  });
+    }),
+    prisma.task.findMany({
+      where: taskWhere,
+      include: {
+        assignedTo: { select: { id: true, name: true } },
+        reviewedBy: { select: { id: true, name: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: taskPageSize,
+    }),
+    prisma.task.count({ where: taskWhere }),
+  ]);
 
   if (!project) {
     return NextResponse.json({ error: "Project not found" }, { status: 404 });
   }
 
-  return NextResponse.json(project);
+  return NextResponse.json({
+    ...project,
+    tasks,
+    taskPagination: { total: taskTotal, page: taskPage, pageSize: taskPageSize },
+  });
 }
 
 export async function PATCH(

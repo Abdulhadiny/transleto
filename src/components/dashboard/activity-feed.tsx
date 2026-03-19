@@ -22,6 +22,11 @@ const actionConfig: Record<string, { color: string }> = {
   TASK_APPROVED: { color: "bg-teal-400" },
   TASK_REJECTED: { color: "bg-rose-400" },
   USER_CREATED: { color: "bg-sky-400" },
+  USER_ROLE_CHANGED: { color: "bg-violet-400" },
+  USER_PASSWORD_CHANGED: { color: "bg-amber-400" },
+  USER_ACTIVATED: { color: "bg-teal-400" },
+  USER_DEACTIVATED: { color: "bg-rose-400" },
+  PASSWORD_SELF_CHANGED: { color: "bg-amber-300" },
 };
 
 function timeAgo(dateStr: string) {

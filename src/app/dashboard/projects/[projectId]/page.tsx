@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import { TaskForm } from "@/components/tasks/task-form";
 import { BulkUpload } from "@/components/tasks/bulk-upload";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Pagination } from "@/components/ui/pagination";
 
 const statusOptions = [
   { value: "", label: "All Statuses" },
@@ -41,6 +42,7 @@ interface Project {
 
 export default function ProjectDetailPage() {
   const { data: session } = useSession();
+  const router = useRouter();
   const params = useParams();
   const projectId = params.projectId as string;
   const [project, setProject] = useState<Project | null>(null);
@@ -50,24 +52,35 @@ export default function ProjectDetailPage() {
   const [exportFormat, setExportFormat] = useState("csv");
   const [exportStatus, setExportStatus] = useState("APPROVED");
   const [exporting, setExporting] = useState(false);
+  const [taskPage, setTaskPage] = useState(1);
+  const [taskTotal, setTaskTotal] = useState(0);
+  const taskPageSize = 20;
 
-  const fetchProject = useCallback(() => {
+  const fetchProject = useCallback((page = taskPage) => {
     const qp = new URLSearchParams();
     if (statusFilter) qp.set("status", statusFilter);
     if (searchFilter) qp.set("search", searchFilter);
-    const qs = qp.toString();
+    qp.set("page", String(page));
+    qp.set("pageSize", String(taskPageSize));
 
-    fetch(`/api/projects/${projectId}${qs ? `?${qs}` : ""}`)
+    fetch(`/api/projects/${projectId}?${qp.toString()}`)
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch");
         return res.json();
       })
       .then((data) => {
         setProject(data);
+        if (data.taskPagination) {
+          setTaskTotal(data.taskPagination.total);
+        }
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [projectId, statusFilter, searchFilter]);
+  }, [projectId, statusFilter, searchFilter, taskPage]);
+
+  useEffect(() => {
+    setTaskPage(1);
+  }, [statusFilter, searchFilter]);
 
   useEffect(() => {
     const timeout = setTimeout(fetchProject, 300);
@@ -126,6 +139,15 @@ export default function ProjectDetailPage() {
     <div className="space-y-6">
       {/* Project header */}
       <div className="animate-fade-up">
+        <button
+          onClick={() => router.back()}
+          className="inline-flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-700 transition-colors mb-3 cursor-pointer"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+          </svg>
+          Back
+        </button>
         <h1 className="text-2xl font-bold text-stone-900">{project.title}</h1>
         {project.description && (
           <p className="mt-1 text-sm text-stone-500">{project.description}</p>
@@ -145,7 +167,7 @@ export default function ProjectDetailPage() {
               <h2 className="text-sm font-semibold text-stone-900">Add Task</h2>
             </CardHeader>
             <CardContent>
-              <TaskForm projectId={projectId} onCreated={fetchProject} />
+              <TaskForm projectId={projectId} onCreated={() => { setTaskPage(1); fetchProject(1); }} />
             </CardContent>
           </Card>
 
@@ -154,7 +176,7 @@ export default function ProjectDetailPage() {
               <h2 className="text-sm font-semibold text-stone-900">Bulk Upload Tasks</h2>
             </CardHeader>
             <CardContent>
-              <BulkUpload projectId={projectId} onCreated={fetchProject} />
+              <BulkUpload projectId={projectId} onCreated={() => { setTaskPage(1); fetchProject(1); }} />
             </CardContent>
           </Card>
 
@@ -207,7 +229,7 @@ export default function ProjectDetailPage() {
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <h2 className="text-sm font-semibold text-stone-900">
-              Tasks ({project.tasks?.length ?? 0})
+              Tasks ({taskTotal})
             </h2>
             <div className="flex flex-col sm:flex-row gap-2">
               <Input
@@ -227,6 +249,7 @@ export default function ProjectDetailPage() {
         </CardHeader>
         <CardContent className="p-0">
           <TaskList tasks={project.tasks ?? []} projectId={projectId} />
+          <Pagination page={taskPage} pageSize={taskPageSize} total={taskTotal} onPageChange={setTaskPage} />
         </CardContent>
       </Card>
     </div>

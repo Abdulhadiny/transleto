@@ -40,10 +40,10 @@ export function TaskAssign({
   const [success, setSuccess] = useState("");
 
   useEffect(() => {
-    fetch("/api/users")
+    fetch("/api/users?pageSize=100")
       .then((res) => res.json())
       .then((data) => {
-        if (Array.isArray(data)) setUsers(data);
+        if (Array.isArray(data?.data)) setUsers(data.data);
       })
       .catch(() => {});
   }, []);

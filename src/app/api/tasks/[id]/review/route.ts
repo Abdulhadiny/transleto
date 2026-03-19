@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSessionOrUnauthorized } from "@/lib/auth-helpers";
 import { reviewTaskSchema } from "@/lib/validations";
 import { logActivity } from "@/lib/activity";
+import { createNotification } from "@/lib/notifications";
 
 export async function PATCH(
   request: Request,
@@ -63,6 +64,21 @@ export async function PATCH(
     projectId: task.projectId,
     taskId: id,
   });
+
+  if (task.assignedToId) {
+    const project = await prisma.project.findUnique({ where: { id: task.projectId }, select: { title: true } });
+    const contentPreview = `${task.originalContent.slice(0, 50)}${task.originalContent.length > 50 ? "..." : ""}`;
+    await createNotification({
+      type: status === "APPROVED" ? "TASK_APPROVED" : "TASK_REJECTED",
+      userId: task.assignedToId,
+      message: status === "APPROVED"
+        ? `Your translation of "${contentPreview}" in "${project?.title}" was approved`
+        : `Your translation of "${contentPreview}" in "${project?.title}" was rejected: ${reviewNote}`,
+      actorId: user.id,
+      taskId: id,
+      projectId: task.projectId,
+    });
+  }
 
   return NextResponse.json(updated);
 }

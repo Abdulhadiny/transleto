@@ -15,6 +15,13 @@ export const registerSchema = z.object({
 export const updateUserSchema = z.object({
   name: z.string().min(1).optional(),
   role: z.enum(["ADMIN", "TRANSLATOR", "REVIEWER"]).optional(),
+  password: z.string().min(6, "Password must be at least 6 characters").optional(),
+  isActive: z.boolean().optional(),
+});
+
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(6, "Password must be at least 6 characters"),
+  newPassword: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 export const createProjectSchema = z.object({
@@ -54,4 +61,20 @@ export const reviewTaskSchema = z.object({
   status: z.enum(["APPROVED", "REJECTED"]),
   reviewNote: z.string().optional(),
   translatedContent: z.string().optional(),
+});
+
+export const createGlossarySchema = z.object({
+  english: z.string(),
+  hausa: z.string(),
+  reviewed: z.string().optional(),
+});
+
+export const updateGlossarySchema = z.object({
+  english: z.string().optional(),
+  hausa: z.string().optional(),
+  reviewed: z.string().optional(),
+});
+
+export const bulkGlossarySchema = z.object({
+  entries: z.array(createGlossarySchema).min(1, "At least one entry is required"),
 });

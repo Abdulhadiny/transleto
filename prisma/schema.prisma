@@ -21,6 +21,13 @@ enum TaskStatus {
   REJECTED
 }
 
+enum NotificationType {
+  TASK_ASSIGNED
+  TASK_APPROVED
+  TASK_REJECTED
+  COMMENT_ADDED
+}
+
 enum Language {
   EN
   HA
@@ -32,6 +39,7 @@ model User {
   email          String   @unique
   hashedPassword String
   role           Role     @default(TRANSLATOR)
+  isActive       Boolean  @default(true)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -45,6 +53,8 @@ model User {
   reviewedTasks   Task[]        @relation("ReviewedTasks")
   activityLogs    ActivityLog[]
   comments        Comment[]
+  notifications      Notification[] @relation("UserNotifications")
+  actedNotifications Notification[] @relation("NotificationActor")
 }
 
 model Account {
@@ -138,6 +148,11 @@ enum ActivityAction {
   TASK_APPROVED
   TASK_REJECTED
   USER_CREATED
+  USER_ROLE_CHANGED
+  USER_PASSWORD_CHANGED
+  USER_ACTIVATED
+  USER_DEACTIVATED
+  PASSWORD_SELF_CHANGED
 }
 
 model ActivityLog {
@@ -152,4 +167,30 @@ model ActivityLog {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([createdAt])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  type      NotificationType
+  message   String           @db.Text
+  userId    String
+  isRead    Boolean          @default(false)
+  taskId    String?
+  projectId String?
+  actorId   String?
+  createdAt DateTime         @default(now())
+
+  user  User  @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  actor User? @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([userId, isRead, createdAt])
+}
+
+model GlossaryEntry {
+  id        String   @id @default(cuid())
+  english   String
+  hausa     String
+  reviewed  String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

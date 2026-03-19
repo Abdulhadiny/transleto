@@ -39,7 +39,7 @@ export function TaskList({ tasks, projectId }: { tasks: Task[]; projectId: strin
   return (
     <>
       {/* Desktop table */}
-      <div className="hidden sm:block overflow-x-auto">
+      <div className="hidden sm:block">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-stone-100 text-left">

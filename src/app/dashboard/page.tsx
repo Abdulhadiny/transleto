@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { StatCard } from "@/components/dashboard/stats-cards";
 import { RecentTasks } from "@/components/dashboard/recent-tasks";
 import { ActivityFeed } from "@/components/dashboard/activity-feed";
+import { TranslatorPerformance } from "@/components/dashboard/translator-performance";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DashboardPage() {
@@ -124,6 +125,12 @@ export default function DashboardPage() {
               accent="teal"
             />
           </div>
+        </div>
+      )}
+
+      {(role === "ADMIN" || role === "TRANSLATOR") && (
+        <div className="animate-fade-up" style={{ animationDelay: "0.2s" }}>
+          <TranslatorPerformance />
         </div>
       )}
 

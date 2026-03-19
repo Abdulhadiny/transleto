@@ -4,12 +4,15 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { UserActionsMenu } from "./user-actions-menu";
+import { AdminChangePasswordModal } from "./admin-change-password-modal";
 
 interface User {
   id: string;
   name: string;
   email: string;
   role: string;
+  isActive: boolean;
   createdAt: string;
 }
 
@@ -34,6 +37,7 @@ export function UserList({
 }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editRole, setEditRole] = useState("");
+  const [passwordUser, setPasswordUser] = useState<User | null>(null);
 
   async function handleRoleChange(userId: string) {
     await fetch(`/api/users/${userId}`, {
@@ -42,6 +46,15 @@ export function UserList({
       body: JSON.stringify({ role: editRole }),
     });
     setEditingId(null);
+    onUpdate();
+  }
+
+  async function handleToggleActive(user: User) {
+    await fetch(`/api/users/${user.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isActive: !user.isActive }),
+    });
     onUpdate();
   }
 
@@ -68,12 +81,18 @@ export function UserList({
               <th className="px-6 py-3 text-[11px] font-semibold uppercase tracking-wider text-stone-400">Name</th>
               <th className="px-6 py-3 text-[11px] font-semibold uppercase tracking-wider text-stone-400">Email</th>
               <th className="px-6 py-3 text-[11px] font-semibold uppercase tracking-wider text-stone-400">Role</th>
+              <th className="px-6 py-3 text-[11px] font-semibold uppercase tracking-wider text-stone-400">Status</th>
               <th className="px-6 py-3 text-[11px] font-semibold uppercase tracking-wider text-stone-400">Actions</th>
             </tr>
           </thead>
           <tbody>
             {users.map((user) => (
-              <tr key={user.id} className="border-b border-stone-50 last:border-0 hover:bg-warm-gray/50 transition-colors">
+              <tr
+                key={user.id}
+                className={`border-b border-stone-50 last:border-0 hover:bg-warm-gray/50 transition-colors ${
+                  !user.isActive ? "opacity-50" : ""
+                }`}
+              >
                 <td className="px-6 py-3.5">
                   <div className="flex items-center gap-3">
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-stone-100 text-[11px] font-bold text-stone-500">
@@ -97,6 +116,14 @@ export function UserList({
                   )}
                 </td>
                 <td className="px-6 py-3.5">
+                  <div className="flex items-center gap-2">
+                    <span className={`h-2 w-2 rounded-full ${user.isActive ? "bg-teal-400" : "bg-stone-300"}`} />
+                    <span className={`text-xs ${user.isActive ? "text-teal-700" : "text-stone-400"}`}>
+                      {user.isActive ? "Active" : "Inactive"}
+                    </span>
+                  </div>
+                </td>
+                <td className="px-6 py-3.5">
                   {editingId === user.id ? (
                     <div className="flex gap-2">
                       <Button size="sm" onClick={() => handleRoleChange(user.id)}>
@@ -107,16 +134,15 @@ export function UserList({
                       </Button>
                     </div>
                   ) : (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => {
-                        setEditingId(user.id);
-                        setEditRole(user.role);
+                    <UserActionsMenu
+                      user={user}
+                      onChangeRole={(u) => {
+                        setEditingId(u.id);
+                        setEditRole(u.role);
                       }}
-                    >
-                      Edit Role
-                    </Button>
+                      onChangePassword={(u) => setPasswordUser(u)}
+                      onToggleActive={handleToggleActive}
+                    />
                   )}
                 </td>
               </tr>
@@ -128,14 +154,17 @@ export function UserList({
       {/* Mobile card list */}
       <div className="sm:hidden divide-y divide-stone-100">
         {users.map((user) => (
-          <div key={user.id} className="px-5 py-4 space-y-3">
+          <div key={user.id} className={`px-5 py-4 space-y-3 ${!user.isActive ? "opacity-50" : ""}`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-stone-100 text-[11px] font-bold text-stone-500">
                   {user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)}
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-stone-900">{user.name}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium text-stone-900">{user.name}</p>
+                    <span className={`h-1.5 w-1.5 rounded-full ${user.isActive ? "bg-teal-400" : "bg-stone-300"}`} />
+                  </div>
                   <p className="text-xs text-stone-400">{user.email}</p>
                 </div>
               </div>
@@ -163,21 +192,29 @@ export function UserList({
                   </Button>
                 </div>
               ) : (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => {
-                    setEditingId(user.id);
-                    setEditRole(user.role);
+                <UserActionsMenu
+                  user={user}
+                  onChangeRole={(u) => {
+                    setEditingId(u.id);
+                    setEditRole(u.role);
                   }}
-                >
-                  Edit Role
-                </Button>
+                  onChangePassword={(u) => setPasswordUser(u)}
+                  onToggleActive={handleToggleActive}
+                />
               )}
             </div>
           </div>
         ))}
       </div>
+
+      {/* Admin password reset modal */}
+      {passwordUser && (
+        <AdminChangePasswordModal
+          user={passwordUser}
+          onClose={() => setPasswordUser(null)}
+          onSuccess={onUpdate}
+        />
+      )}
     </>
   );
 }
