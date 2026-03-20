@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionOrUnauthorized } from "@/lib/auth-helpers";
 import { z } from "zod";
+import { createNotifications } from "@/lib/notifications";
 
 const createCommentSchema = z.object({
   content: z.string().min(1, "Comment cannot be empty"),
@@ -58,6 +59,19 @@ export async function POST(
       user: { select: { id: true, name: true, role: true } },
     },
   });
+
+  const project = await prisma.project.findUnique({ where: { id: task.projectId }, select: { title: true } });
+  const contentPreview = `${task.originalContent.slice(0, 50)}${task.originalContent.length > 50 ? "..." : ""}`;
+  await createNotifications(
+    [task.assignedToId, task.reviewedById],
+    {
+      type: "COMMENT_ADDED",
+      message: `${session!.user.name} commented on task "${contentPreview}" in "${project?.title}"`,
+      actorId: session!.user.id,
+      taskId,
+      projectId: task.projectId,
+    }
+  );
 
   return NextResponse.json(comment, { status: 201 });
 }

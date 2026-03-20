@@ -90,9 +90,16 @@ export function CommentThread({ taskId }: { taskId: string }) {
     <div className="space-y-4">
       <div className="max-h-80 overflow-y-auto space-y-3">
         {loading ? (
-          <p className="text-sm text-gray-400">Loading comments...</p>
+          <p className="text-sm text-stone-400">Loading comments...</p>
         ) : comments.length === 0 ? (
-          <p className="text-sm text-gray-500">No comments yet. Start the conversation.</p>
+          <div className="flex flex-col items-center py-8 text-center">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-stone-100 mb-2">
+              <svg className="w-4 h-4 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+              </svg>
+            </div>
+            <p className="text-sm text-stone-500">No comments yet. Start the conversation.</p>
+          </div>
         ) : (
           comments.map((comment) => {
             const isOwn = comment.user.id === session?.user?.id;
@@ -102,24 +109,27 @@ export function CommentThread({ taskId }: { taskId: string }) {
                 className={`flex flex-col ${isOwn ? "items-end" : "items-start"}`}
               >
                 <div
-                  className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
+                  className={`max-w-[80%] rounded-xl px-4 py-3 text-sm ${
                     isOwn
-                      ? "bg-blue-50 border border-blue-200"
-                      : "bg-gray-50 border border-gray-200"
+                      ? "bg-amber-50 border border-amber-200/60"
+                      : "bg-stone-50 border border-stone-200/60"
                   }`}
                 >
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-medium text-gray-800">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="font-medium text-stone-800 text-xs">
                       {comment.user.name}
                     </span>
-                    <Badge variant={roleBadgeVariant[comment.user.role] || "default"} className="text-[10px] px-1.5 py-0">
+                    <Badge
+                      variant={roleBadgeVariant[comment.user.role] || "default"}
+                      className="text-[9px] px-1.5 py-0"
+                    >
                       {comment.user.role}
                     </Badge>
-                    <span className="text-xs text-gray-400">
+                    <span className="text-[11px] text-stone-400">
                       {timeAgo(comment.createdAt)}
                     </span>
                   </div>
-                  <p className="text-gray-700 whitespace-pre-wrap">{comment.content}</p>
+                  <p className="text-stone-700 whitespace-pre-wrap leading-relaxed">{comment.content}</p>
                 </div>
               </div>
             );
@@ -129,10 +139,17 @@ export function CommentThread({ taskId }: { taskId: string }) {
       </div>
 
       {error && (
-        <div className="rounded-md bg-red-50 p-2 text-sm text-red-600">{error}</div>
+        <div className="flex items-center justify-between rounded-lg bg-rose-50 border border-rose-200/60 px-3 py-2 text-sm text-rose-700">
+          {error}
+          <button onClick={() => setError("")} className="ml-2 shrink-0 text-rose-400 hover:text-rose-600">
+            <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+            </svg>
+          </button>
+        </div>
       )}
 
-      <form onSubmit={handleSubmit} className="flex gap-2">
+      <form onSubmit={handleSubmit} className="flex gap-3">
         <Textarea
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
@@ -140,8 +157,13 @@ export function CommentThread({ taskId }: { taskId: string }) {
           rows={2}
           className="flex-1"
         />
-        <Button type="submit" disabled={posting || !newComment.trim()} className="self-end">
-          {posting ? "Sending..." : "Send"}
+        <Button
+          type="submit"
+          disabled={posting || !newComment.trim()}
+          className="self-end"
+          size="sm"
+        >
+          {posting ? "..." : "Send"}
         </Button>
       </form>
     </div>

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth-helpers";
 import { logActivity } from "@/lib/activity";
+import { createNotification } from "@/lib/notifications";
 import { z } from "zod";
 
 const bulkTaskSchema = z.object({
@@ -50,6 +51,16 @@ export async function POST(
     detail: `Bulk created ${created.count} tasks in "${project.title}"`,
     projectId,
   });
+
+  if (assignedToId) {
+    await createNotification({
+      type: "TASK_ASSIGNED",
+      userId: assignedToId,
+      message: `You were assigned ${created.count} new task${created.count !== 1 ? "s" : ""} in project "${project.title}"`,
+      actorId: session!.user.id,
+      projectId,
+    });
+  }
 
   return NextResponse.json({ count: created.count }, { status: 201 });
 }

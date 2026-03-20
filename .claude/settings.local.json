@@ -10,7 +10,9 @@
       "Bash(node:*)",
       "Bash(npx tsc:*)",
       "Bash(npm run:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(npx next:*)",
+      "WebFetch(domain:docs.cloud.google.com)"
     ]
   }
 }

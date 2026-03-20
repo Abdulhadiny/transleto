@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth-helpers";
 import { createTaskSchema } from "@/lib/validations";
 import { logActivity } from "@/lib/activity";
+import { createNotification } from "@/lib/notifications";
 
 export async function POST(
   request: Request,
@@ -60,6 +61,17 @@ export async function POST(
     );
   }
   await Promise.all(logs);
+
+  if (parsed.data.assignedToId) {
+    await createNotification({
+      type: "TASK_ASSIGNED",
+      userId: parsed.data.assignedToId,
+      message: `You were assigned to task "${task.originalContent.slice(0, 50)}${task.originalContent.length > 50 ? "..." : ""}" in project "${project.title}"`,
+      actorId: session!.user.id,
+      taskId: task.id,
+      projectId,
+    });
+  }
 
   return NextResponse.json(task, { status: 201 });
 }
