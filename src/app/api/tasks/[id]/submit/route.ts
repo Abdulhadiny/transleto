@@ -27,7 +27,7 @@ export async function PATCH(
     return NextResponse.json({ error: "Not assigned to you" }, { status: 403 });
   }
 
-  if (task.status !== "IN_PROGRESS" && task.status !== "NOT_STARTED") {
+  if (task.status !== "IN_PROGRESS" && task.status !== "NOT_STARTED" && task.status !== "REJECTED") {
     return NextResponse.json({ error: "Task cannot be submitted in current status" }, { status: 400 });
   }
 

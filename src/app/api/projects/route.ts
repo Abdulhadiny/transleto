@@ -5,14 +5,24 @@ import { createProjectSchema } from "@/lib/validations";
 import { logActivity } from "@/lib/activity";
 
 export async function GET(request: Request) {
-  const { error } = await getSessionOrUnauthorized();
+  const { session, error } = await getSessionOrUnauthorized();
   if (error) return error;
 
+  const user = session!.user;
   const { searchParams } = new URL(request.url);
   const search = searchParams.get("search") || "";
   const lang = searchParams.get("lang") || "";
 
   const where: Record<string, unknown> = {};
+
+  // Translators only see projects where they have assigned tasks
+  if (user.role === "TRANSLATOR") {
+    where.tasks = { some: { assignedToId: user.id } };
+  }
+  // Reviewers only see projects where they have tasks to review
+  if (user.role === "REVIEWER") {
+    where.tasks = { some: { reviewedById: user.id } };
+  }
 
   if (search) {
     where.OR = [

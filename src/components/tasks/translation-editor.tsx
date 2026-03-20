@@ -130,11 +130,18 @@ export function TranslationEditor({
   return (
     <div className="space-y-5">
       {error && (
-        <div className="flex items-center gap-2 rounded-lg bg-rose-50 border border-rose-200/60 px-4 py-3 text-sm text-rose-700">
-          <svg className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
-          </svg>
-          {error}
+        <div className="flex items-center justify-between rounded-lg bg-rose-50 border border-rose-200/60 px-4 py-3 text-sm text-rose-700">
+          <div className="flex items-center gap-2">
+            <svg className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
+            </svg>
+            {error}
+          </div>
+          <button onClick={() => setError("")} className="ml-2 shrink-0 text-rose-400 hover:text-rose-600">
+            <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+            </svg>
+          </button>
         </div>
       )}
 
@@ -215,7 +222,7 @@ export function TranslationEditor({
 
       {canEdit && (
         <div className="space-y-3">
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2 sm:gap-3">
             <div>
               <Button
                 variant="secondary"
@@ -224,7 +231,7 @@ export function TranslationEditor({
               >
                 {suggesting ? (
                   <>
-                    <svg className="h-4 w-4 animate-spin mr-1.5" viewBox="0 0 24 24" fill="none">
+                    <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" viewBox="0 0 24 24" fill="none">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                     </svg>
@@ -232,7 +239,7 @@ export function TranslationEditor({
                   </>
                 ) : (
                   <>
-                    <svg className="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+                    <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor">
                       <path d="M10 1l2.39 5.645L18 7.49l-4.18 3.635L15.18 17 10 13.71 4.82 17l1.36-5.875L2 7.49l5.61-.845L10 1z" />
                     </svg>
                     AI Translation
@@ -241,7 +248,7 @@ export function TranslationEditor({
               </Button>
             </div>
 
-            <div className="flex items-end gap-2">
+            <div className="flex flex-wrap items-end gap-2">
               <Button
                 variant="secondary"
                 onClick={handleCheckGlossary}
@@ -249,7 +256,7 @@ export function TranslationEditor({
               >
                 {checkingGlossary ? (
                   <>
-                    <svg className="h-4 w-4 animate-spin mr-1.5" viewBox="0 0 24 24" fill="none">
+                    <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" viewBox="0 0 24 24" fill="none">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                     </svg>
@@ -257,7 +264,7 @@ export function TranslationEditor({
                   </>
                 ) : (
                   <>
-                    <svg className="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+                    <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clipRule="evenodd" />
                     </svg>
                     Check Glossary
@@ -275,11 +282,11 @@ export function TranslationEditor({
                   if (e.key === "Enter") handleCheckGlossary();
                 }}
                 placeholder="Enter a word..."
-                className="h-9 rounded-lg border border-stone-200 bg-white px-3 text-sm text-stone-700 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-300 w-44"
+                className="h-7 sm:h-9 rounded-lg border border-stone-200 bg-white px-2 sm:px-3 text-xs sm:text-sm text-stone-700 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-300 w-32 sm:w-44"
               />
               {glossaryLookup && (
                 <span
-                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
+                  className={`inline-flex items-center gap-1 rounded-full px-2 sm:px-2.5 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium ${
                     glossaryLookup === "Not available" || glossaryLookup === "Error looking up term"
                       ? "bg-stone-100 text-stone-600"
                       : "bg-emerald-50 border border-emerald-200 text-emerald-700"
@@ -299,7 +306,7 @@ export function TranslationEditor({
             </div>
           </div>
 
-          <div className="flex justify-end gap-3">
+          <div className="flex justify-end gap-2 sm:gap-3">
             <Button variant="secondary" onClick={handleSave} disabled={saving}>
               {saving ? "Saving..." : "Save Draft"}
             </Button>

@@ -84,31 +84,40 @@ export default function LoginPage() {
       <div className="flex flex-1 items-center justify-center px-6 py-12 bg-warm-white">
         <div className="w-full max-w-sm">
           {/* Mobile brand */}
-          <div className="flex items-center gap-2.5 mb-8 lg:hidden">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500/10">
-              <span className="text-amber-600 font-bold text-sm">T</span>
-            </div>
-            <span className="font-serif text-xl font-semibold text-stone-900 tracking-tight">
-              Transleto
-            </span>
+          <div className="flex items-center justify-center mb-8 lg:hidden">
+            <Image
+              src="/Transleto-login-logo.png"
+              alt="Transleto"
+              width={150}
+              height={150}
+              className="object-contain"
+              priority
+            />
           </div>
 
           <div className="mb-8">
-            <h1 className="text-2xl font-semibold text-stone-900">
+            <h1 className="text-xl font-semibold text-stone-900">
               Welcome back
             </h1>
-            <p className="mt-1.5 text-sm text-stone-500">
+            <p className="mt-1.5 text-xs text-stone-500">
               Sign in to your account to continue
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
-              <div className="flex items-center gap-2 rounded-lg bg-rose-50 border border-rose-200/60 px-4 py-3 text-sm text-rose-700">
-                <svg className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
-                </svg>
-                {error}
+              <div className="flex items-center justify-between rounded-lg bg-rose-50 border border-rose-200/60 px-4 py-3 text-sm text-rose-700">
+                <div className="flex items-center gap-2">
+                  <svg className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
+                  </svg>
+                  {error}
+                </div>
+                <button onClick={() => setError("")} className="ml-2 shrink-0 text-rose-400 hover:text-rose-600">
+                  <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                  </svg>
+                </button>
               </div>
             )}
 

@@ -69,9 +69,10 @@ export async function GET() {
   }
 
   if (user.role === "REVIEWER") {
-    const [submittedForReview, reviewedByMe] = await Promise.all([
+    const [submittedForReview, reviewedByMe, approvedByMe] = await Promise.all([
       prisma.task.count({ where: { reviewedById: user.id, status: "SUBMITTED" } }),
       prisma.task.count({ where: { reviewedById: user.id, status: { in: ["APPROVED", "REJECTED"] } } }),
+      prisma.task.count({ where: { reviewedById: user.id, status: "APPROVED" } }),
     ]);
 
     const recentTasks = await prisma.task.findMany({
@@ -87,6 +88,7 @@ export async function GET() {
     return NextResponse.json({
       submittedForReview,
       reviewedByMe,
+      approvedByMe,
       recentTasks,
     });
   }

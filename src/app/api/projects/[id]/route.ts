@@ -61,6 +61,22 @@ export async function GET(
     return NextResponse.json({ error: "Project not found" }, { status: 404 });
   }
 
+  // Translators/reviewers can only access projects where they have tasks
+  if (user.role === "TRANSLATOR" || user.role === "REVIEWER") {
+    const hasTask = await prisma.task.findFirst({
+      where: {
+        projectId: id,
+        ...(user.role === "TRANSLATOR"
+          ? { assignedToId: user.id }
+          : { reviewedById: user.id }),
+      },
+      select: { id: true },
+    });
+    if (!hasTask) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+  }
+
   return NextResponse.json({
     ...project,
     tasks,

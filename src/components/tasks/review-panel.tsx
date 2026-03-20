@@ -64,11 +64,18 @@ export function ReviewPanel({
   return (
     <div className="space-y-5">
       {error && (
-        <div className="flex items-center gap-2 rounded-lg bg-rose-50 border border-rose-200/60 px-4 py-3 text-sm text-rose-700">
-          <svg className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
-          </svg>
-          {error}
+        <div className="flex items-center justify-between rounded-lg bg-rose-50 border border-rose-200/60 px-4 py-3 text-sm text-rose-700">
+          <div className="flex items-center gap-2">
+            <svg className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
+            </svg>
+            {error}
+          </div>
+          <button onClick={() => setError("")} className="ml-2 shrink-0 text-rose-400 hover:text-rose-600">
+            <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+            </svg>
+          </button>
         </div>
       )}
 
@@ -99,14 +106,17 @@ export function ReviewPanel({
         </div>
 
         {canReview ? (
-          <Textarea
-            label="Translation (editable)"
-            value={editedTranslation}
-            onChange={(e) => setEditedTranslation(e.target.value)}
-            rows={6}
-            placeholder="Edit translation if needed..."
-            className="min-h-[160px]"
-          />
+          <div className="flex flex-col">
+            <label className="block text-sm font-medium text-stone-600 mb-1.5">
+              Translation (editable)
+            </label>
+            <textarea
+              value={editedTranslation}
+              onChange={(e) => setEditedTranslation(e.target.value)}
+              placeholder="Edit translation if needed..."
+              className="flex-1 block w-full rounded-lg border border-stone-200 hover:border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 placeholder:text-stone-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 resize-y min-h-[160px]"
+            />
+          </div>
         ) : (
           <div>
             <label className="block text-sm font-medium text-stone-600 mb-1.5">

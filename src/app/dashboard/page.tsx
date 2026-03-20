@@ -125,6 +125,13 @@ export default function DashboardPage() {
               accent="teal"
             />
           </div>
+          <div className="animate-fade-up stagger-3">
+            <StatCard
+              title="Approved"
+              value={stats.approvedByMe as number}
+              accent="sky"
+            />
+          </div>
         </div>
       )}
 
