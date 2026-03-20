@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Role } from "@prisma/client";
@@ -80,12 +81,15 @@ export function Sidebar({ open, onClose }: { open?: boolean; onClose?: () => voi
         {/* Brand */}
         <div className="flex h-16 items-center justify-between px-6">
           <Link href="/dashboard" className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/15">
-              <span className="text-amber-400 font-bold text-sm">T</span>
-            </div>
-            <span className="font-serif text-lg font-semibold text-white tracking-tight">
+           <Image 
+            src="/Transleto-sidebar-logo.png" 
+            alt="Transleto" 
+            width={56} 
+            height={56} 
+            />
+           <span className="font-serif text-3xl font-semibold text-white tracking-tight">
               Transleto
-            </span>
+           </span>
           </Link>
           <button
             onClick={onClose}

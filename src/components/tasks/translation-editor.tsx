@@ -4,6 +4,11 @@ import { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 
+interface GlossaryTerm {
+  english: string;
+  hausa: string;
+}
+
 interface TranslationEditorProps {
   taskId: string;
   originalContent: string;
@@ -25,9 +30,61 @@ export function TranslationEditor({
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [suggesting, setSuggesting] = useState(false);
+  const [glossaryTerms, setGlossaryTerms] = useState<GlossaryTerm[]>([]);
+  const [suggestError, setSuggestError] = useState("");
+  const [glossaryWord, setGlossaryWord] = useState("");
+  const [glossaryLookup, setGlossaryLookup] = useState<string | null>(null);
+  const [checkingGlossary, setCheckingGlossary] = useState(false);
 
   const canEdit = status === "NOT_STARTED" || status === "IN_PROGRESS" || status === "REJECTED";
   const canSubmit = canEdit && translation.trim().length > 0;
+
+  async function handleCheckGlossary() {
+    if (!glossaryWord.trim()) return;
+    setCheckingGlossary(true);
+    setGlossaryLookup(null);
+
+    try {
+      const res = await fetch(
+        `/api/glossary/lookup?word=${encodeURIComponent(glossaryWord.trim())}`
+      );
+      const data = await res.json();
+
+      if (data.found) {
+        setGlossaryLookup(`${data.english} → ${data.hausa}`);
+      } else {
+        setGlossaryLookup("Not available");
+      }
+    } catch {
+      setGlossaryLookup("Error looking up term");
+    } finally {
+      setCheckingGlossary(false);
+    }
+  }
+
+  async function handleSuggest() {
+    setSuggesting(true);
+    setSuggestError("");
+
+    try {
+      const res = await fetch(`/api/tasks/${taskId}/suggest`, {
+        method: "POST",
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setTranslation(data.suggestion);
+      } else {
+        setSuggestError(data.error || "Failed to get suggestion");
+      }
+    } catch {
+      setSuggestError("Network error — could not reach translation service");
+    } finally {
+      setSuggesting(false);
+    }
+  }
 
   async function handleSave() {
     setSaving(true);
@@ -81,6 +138,22 @@ export function TranslationEditor({
         </div>
       )}
 
+      {suggestError && (
+        <div className="flex items-center justify-between rounded-lg bg-sky-50 border border-sky-200/60 px-4 py-3 text-sm text-sky-700">
+          <div className="flex items-center gap-2">
+            <svg className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clipRule="evenodd" />
+            </svg>
+            {suggestError}
+          </div>
+          <button onClick={() => setSuggestError("")} className="ml-2 shrink-0 text-sky-400 hover:text-sky-600">
+            <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+            </svg>
+          </button>
+        </div>
+      )}
+
       {reviewNote && status === "REJECTED" && (
         <div className="flex gap-3 rounded-lg bg-amber-50 border border-amber-200/60 px-4 py-3">
           <svg className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
@@ -103,25 +176,137 @@ export function TranslationEditor({
           </div>
         </div>
 
-        <Textarea
-          label="Translation"
-          value={translation}
-          onChange={(e) => setTranslation(e.target.value)}
-          disabled={!canEdit}
-          rows={6}
-          placeholder="Enter your translation here..."
-          className="min-h-[160px]"
-        />
+        <div className="flex flex-col">
+          <label className="block text-sm font-medium text-stone-600 mb-1.5">
+            Translation
+          </label>
+          <textarea
+            value={translation}
+            onChange={(e) => setTranslation(e.target.value)}
+            disabled={!canEdit}
+            placeholder="Enter your translation here..."
+            className="flex-1 block w-full rounded-lg border border-stone-200 hover:border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 placeholder:text-stone-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 resize-y min-h-[160px]"
+          />
+        </div>
       </div>
 
+      {glossaryTerms.length > 0 && (
+        <div className="rounded-lg bg-amber-50 border border-amber-200/60 px-4 py-3">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm font-medium text-amber-800">Glossary Hints</p>
+            <button onClick={() => setGlossaryTerms([])} className="text-amber-400 hover:text-amber-600">
+              <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+              </svg>
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {glossaryTerms.map((term) => (
+              <span
+                key={term.english}
+                className="inline-flex items-center gap-1 rounded-full bg-amber-100 border border-amber-200 px-2.5 py-0.5 text-xs text-amber-800"
+              >
+                {term.english} → {term.hausa}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       {canEdit && (
-        <div className="flex gap-3">
-          <Button variant="secondary" onClick={handleSave} disabled={saving}>
-            {saving ? "Saving..." : "Save Draft"}
-          </Button>
-          <Button onClick={handleSubmit} disabled={!canSubmit || submitting}>
-            {submitting ? "Submitting..." : "Submit for Review"}
-          </Button>
+        <div className="space-y-3">
+          <div className="flex flex-col gap-3">
+            <div>
+              <Button
+                variant="secondary"
+                onClick={handleSuggest}
+                disabled={suggesting}
+              >
+                {suggesting ? (
+                  <>
+                    <svg className="h-4 w-4 animate-spin mr-1.5" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Translating...
+                  </>
+                ) : (
+                  <>
+                    <svg className="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M10 1l2.39 5.645L18 7.49l-4.18 3.635L15.18 17 10 13.71 4.82 17l1.36-5.875L2 7.49l5.61-.845L10 1z" />
+                    </svg>
+                    AI Translation
+                  </>
+                )}
+              </Button>
+            </div>
+
+            <div className="flex items-end gap-2">
+              <Button
+                variant="secondary"
+                onClick={handleCheckGlossary}
+                disabled={checkingGlossary || !glossaryWord.trim()}
+              >
+                {checkingGlossary ? (
+                  <>
+                    <svg className="h-4 w-4 animate-spin mr-1.5" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Checking...
+                  </>
+                ) : (
+                  <>
+                    <svg className="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clipRule="evenodd" />
+                    </svg>
+                    Check Glossary
+                  </>
+                )}
+              </Button>
+              <input
+                type="text"
+                value={glossaryWord}
+                onChange={(e) => {
+                  setGlossaryWord(e.target.value);
+                  setGlossaryLookup(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleCheckGlossary();
+                }}
+                placeholder="Enter a word..."
+                className="h-9 rounded-lg border border-stone-200 bg-white px-3 text-sm text-stone-700 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-300 w-44"
+              />
+              {glossaryLookup && (
+                <span
+                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
+                    glossaryLookup === "Not available" || glossaryLookup === "Error looking up term"
+                      ? "bg-stone-100 text-stone-600"
+                      : "bg-emerald-50 border border-emerald-200 text-emerald-700"
+                  }`}
+                >
+                  {glossaryLookup}
+                  <button
+                    onClick={() => setGlossaryLookup(null)}
+                    className="ml-0.5 hover:opacity-70"
+                  >
+                    <svg className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                    </svg>
+                  </button>
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <Button variant="secondary" onClick={handleSave} disabled={saving}>
+              {saving ? "Saving..." : "Save Draft"}
+            </Button>
+            <Button onClick={handleSubmit} disabled={!canSubmit || submitting}>
+              {submitting ? "Submitting..." : "Submit for Review"}
+            </Button>
+          </div>
         </div>
       )}
     </div>

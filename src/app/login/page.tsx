@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -53,23 +54,15 @@ export default function LoginPage() {
           </svg>
         </div>
 
-        <div className="relative z-10 px-12 max-w-md">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/15 backdrop-blur-sm border border-amber-500/10">
-              <span className="text-amber-400 font-bold text-lg">T</span>
-            </div>
-            <span className="font-serif text-2xl font-semibold text-white tracking-tight">
-              Transleto
-            </span>
-          </div>
-          <h2 className="font-serif text-3xl font-medium text-white/90 leading-snug mb-4">
-            Craft precise translations,{" "}
-            <span className="italic text-amber-300/80">together.</span>
-          </h2>
-          <p className="text-gray-400 text-sm leading-relaxed">
-            A professional workflow for managing translation projects from draft to
-            approval. Assign tasks, review submissions, and deliver quality at scale.
-          </p>
+        <div className="relative z-10 px-12 flex flex-col items-center">
+          <Image
+            src="/Transleto-login-logo.png"
+            alt="Transleto"
+            width={400}
+            height={400}
+            className="object-contain"
+            priority
+          />
           <div className="mt-12 flex items-center gap-6 text-xs text-gray-500">
             <div className="flex items-center gap-2">
               <div className="h-1.5 w-1.5 rounded-full bg-teal-400" />
