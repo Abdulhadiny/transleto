@@ -192,6 +192,7 @@ export default function ProjectDetailPage() {
                     options={[
                       { value: "csv", label: "CSV" },
                       { value: "json", label: "JSON" },
+                      { value: "docx", label: "DOCX" },
                     ]}
                     value={exportFormat}
                     onChange={(e) => setExportFormat(e.target.value)}

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { ConfirmModal } from "@/components/ui/confirm-modal";
 import { UserActionsMenu } from "./user-actions-menu";
 import { AdminChangePasswordModal } from "./admin-change-password-modal";
 
@@ -38,24 +39,43 @@ export function UserList({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editRole, setEditRole] = useState("");
   const [passwordUser, setPasswordUser] = useState<User | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmMessage, setConfirmMessage] = useState("");
+  const pendingAction = useRef<(() => Promise<void>) | null>(null);
 
-  async function handleRoleChange(userId: string) {
-    await fetch(`/api/users/${userId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ role: editRole }),
-    });
-    setEditingId(null);
-    onUpdate();
+  function showConfirm(message: string, action: () => Promise<void>) {
+    setConfirmMessage(message);
+    pendingAction.current = action;
+    setConfirmOpen(true);
   }
 
-  async function handleToggleActive(user: User) {
-    await fetch(`/api/users/${user.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ isActive: !user.isActive }),
+  async function handleConfirm() {
+    setConfirmOpen(false);
+    await pendingAction.current?.();
+  }
+
+  function handleRoleChange(userId: string) {
+    showConfirm("Are you sure you want to change this user's role?", async () => {
+      await fetch(`/api/users/${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: editRole }),
+      });
+      setEditingId(null);
+      onUpdate();
     });
-    onUpdate();
+  }
+
+  function handleToggleActive(user: User) {
+    const action = user.isActive ? "deactivate" : "activate";
+    showConfirm(`Are you sure you want to ${action} this user?`, async () => {
+      await fetch(`/api/users/${user.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: !user.isActive }),
+      });
+      onUpdate();
+    });
   }
 
   if (users.length === 0) {
@@ -215,6 +235,14 @@ export function UserList({
           onSuccess={onUpdate}
         />
       )}
+      <ConfirmModal
+        open={confirmOpen}
+        title="Confirm Action"
+        message={confirmMessage}
+        confirmLabel="Confirm"
+        onConfirm={handleConfirm}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </>
   );
 }

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { ConfirmModal } from "@/components/ui/confirm-modal";
 
 interface User {
   id: string;
@@ -47,6 +48,8 @@ export function BulkUpload({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [showConfirm, setShowConfirm] = useState(false);
+  const pendingData = useRef<FormData | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -82,18 +85,23 @@ export function BulkUpload({
     reader.readAsText(file);
   }
 
-  async function handleUpload(e: React.FormEvent<HTMLFormElement>) {
+  function handleUpload(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (preview.length === 0) {
       setError("No tasks to upload. Select a file first.");
       return;
     }
+    pendingData.current = new FormData(e.currentTarget);
+    setShowConfirm(true);
+  }
 
+  async function handleConfirmedUpload() {
+    setShowConfirm(false);
+    const formData = pendingData.current;
+    if (!formData) return;
     setLoading(true);
     setError("");
     setSuccess("");
-
-    const formData = new FormData(e.currentTarget);
 
     const res = await fetch(`/api/projects/${projectId}/tasks/bulk`, {
       method: "POST",
@@ -222,6 +230,14 @@ export function BulkUpload({
       <Button type="submit" disabled={loading || preview.length === 0}>
         {loading ? "Uploading..." : `Upload ${preview.length} Tasks`}
       </Button>
+      <ConfirmModal
+        open={showConfirm}
+        title="Upload Tasks"
+        message={`Are you sure you want to upload ${preview.length} tasks?`}
+        confirmLabel="Upload"
+        onConfirm={handleConfirmedUpload}
+        onCancel={() => setShowConfirm(false)}
+      />
     </form>
   );
 }

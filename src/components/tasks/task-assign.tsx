@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { ConfirmModal } from "@/components/ui/confirm-modal";
 
 interface User {
   id: string;
@@ -38,6 +39,7 @@ export function TaskAssign({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
     fetch("/api/users?pageSize=100")
@@ -56,7 +58,12 @@ export function TaskAssign({
     reviewerId !== (currentReviewerId || "") ||
     dueDate !== formatDateForInput(currentDueDate);
 
-  async function handleSave() {
+  function handleSave() {
+    setShowConfirm(true);
+  }
+
+  async function handleConfirmedSave() {
+    setShowConfirm(false);
     setSaving(true);
     setError("");
     setSuccess("");
@@ -137,6 +144,14 @@ export function TaskAssign({
       <Button size="sm" onClick={handleSave} disabled={saving || !hasChanges}>
         {saving ? "Saving..." : "Update Assignment"}
       </Button>
+      <ConfirmModal
+        open={showConfirm}
+        title="Update Assignment"
+        message="Are you sure you want to update this assignment?"
+        confirmLabel="Update"
+        onConfirm={handleConfirmedSave}
+        onCancel={() => setShowConfirm(false)}
+      />
     </div>
   );
 }

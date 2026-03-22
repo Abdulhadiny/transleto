@@ -64,7 +64,7 @@ export function RecentTasks({ tasks }: { tasks: RecentTask[] }) {
                 <tr key={task.id} className="border-b border-stone-50 last:border-0 hover:bg-warm-gray/50 transition-colors">
                   <td className="px-4 py-3.5">
                     <Link
-                      href={`/dashboard/projects/${task.projectId}`}
+                      href={`/dashboard/projects/${task.projectId}/tasks/${task.id}`}
                       className="text-sm font-medium text-stone-800 hover:text-amber-700 transition-colors line-clamp-1 break-all"
                     >
                       {task.originalContent.substring(0, 60)}
@@ -91,7 +91,7 @@ export function RecentTasks({ tasks }: { tasks: RecentTask[] }) {
           {tasks.map((task) => (
             <Link
               key={task.id}
-              href={`/dashboard/projects/${task.projectId}`}
+              href={`/dashboard/projects/${task.projectId}/tasks/${task.id}`}
               className="flex flex-col gap-2 px-5 py-4 hover:bg-warm-gray/50 transition-colors"
             >
               <p className="text-sm font-medium text-stone-800 line-clamp-1">

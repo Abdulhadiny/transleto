@@ -9,10 +9,10 @@ export async function GET() {
   const user = session!.user;
 
   if (user.role === "ADMIN") {
-    const [totalProjects, totalTasks, totalUsers, tasksByStatus] = await Promise.all([
+    const [totalProjects, totalTasks, unassignedTasks, tasksByStatus] = await Promise.all([
       prisma.project.count(),
       prisma.task.count(),
-      prisma.user.count(),
+      prisma.task.count({ where: { assignedToId: null } }),
       prisma.task.groupBy({
         by: ["status"],
         _count: { status: true },
@@ -31,7 +31,7 @@ export async function GET() {
     return NextResponse.json({
       totalProjects,
       totalTasks,
-      totalUsers,
+      unassignedTasks,
       tasksByStatus: Object.fromEntries(
         tasksByStatus.map((t) => [t.status, t._count.status])
       ),
@@ -69,10 +69,11 @@ export async function GET() {
   }
 
   if (user.role === "REVIEWER") {
-    const [submittedForReview, reviewedByMe, approvedByMe] = await Promise.all([
+    const [submittedForReview, reviewedByMe, approvedByMe, rejectedByMe] = await Promise.all([
       prisma.task.count({ where: { reviewedById: user.id, status: "SUBMITTED" } }),
       prisma.task.count({ where: { reviewedById: user.id, status: { in: ["APPROVED", "REJECTED"] } } }),
       prisma.task.count({ where: { reviewedById: user.id, status: "APPROVED" } }),
+      prisma.task.count({ where: { reviewedById: user.id, status: "REJECTED" } }),
     ]);
 
     const recentTasks = await prisma.task.findMany({
@@ -89,6 +90,7 @@ export async function GET() {
       submittedForReview,
       reviewedByMe,
       approvedByMe,
+      rejectedByMe,
       recentTasks,
     });
   }

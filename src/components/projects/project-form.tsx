@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { ConfirmModal } from "@/components/ui/confirm-modal";
 
 const languageOptions = [
   { value: "EN", label: "English" },
@@ -16,13 +17,21 @@ export function ProjectForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showConfirm, setShowConfirm] = useState(false);
+  const pendingData = useRef<FormData | null>(null);
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    pendingData.current = new FormData(e.currentTarget);
+    setShowConfirm(true);
+  }
+
+  async function handleConfirmedSubmit() {
+    setShowConfirm(false);
+    const formData = pendingData.current;
+    if (!formData) return;
     setLoading(true);
     setError("");
-
-    const formData = new FormData(e.currentTarget);
 
     const res = await fetch("/api/projects", {
       method: "POST",
@@ -88,6 +97,14 @@ export function ProjectForm() {
       <Button type="submit" disabled={loading}>
         {loading ? "Creating..." : "Create Project"}
       </Button>
+      <ConfirmModal
+        open={showConfirm}
+        title="Create Project"
+        message="Are you sure you want to create this project?"
+        confirmLabel="Create"
+        onConfirm={handleConfirmedSubmit}
+        onCancel={() => setShowConfirm(false)}
+      />
     </form>
   );
 }

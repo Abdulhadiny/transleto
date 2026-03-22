@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { ConfirmModal } from "@/components/ui/confirm-modal";
 
 interface User {
   id: string;
@@ -23,9 +24,15 @@ export function AdminChangePasswordModal({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setShowConfirm(true);
+  }
+
+  async function handleConfirmedSubmit() {
+    setShowConfirm(false);
     setError("");
 
     if (password.length < 6) {
@@ -103,6 +110,14 @@ export function AdminChangePasswordModal({
               {loading ? "Resetting..." : "Reset Password"}
             </Button>
           </div>
+          <ConfirmModal
+            open={showConfirm}
+            title="Reset Password"
+            message={`Are you sure you want to reset this user's password?`}
+            confirmLabel="Reset Password"
+            onConfirm={handleConfirmedSubmit}
+            onCancel={() => setShowConfirm(false)}
+          />
         </form>
       </div>
     </div>

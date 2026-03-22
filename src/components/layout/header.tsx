@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { ChangePasswordModal } from "@/components/users/change-password-modal";
 import { NotificationBell } from "@/components/layout/notification-bell";
+import { ConfirmModal } from "@/components/ui/confirm-modal";
 
 const roleBadgeVariant: Record<string, "info" | "success" | "warning"> = {
   ADMIN: "info",
@@ -26,6 +27,7 @@ function getPageTitle(pathname: string): string {
   if (pathname.includes("/tasks/")) return "Task Detail";
   if (pathname.match(/\/dashboard\/projects\/[^/]+$/)) return "Project";
   if (pathname === "/dashboard/projects") return "Projects";
+  if (pathname === "/glossary") return "Glossary";
   return "Dashboard";
 }
 
@@ -49,6 +51,7 @@ export function Header({ onMenuToggle }: { onMenuToggle?: () => void }) {
   const [searchFocused, setSearchFocused] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -328,7 +331,7 @@ export function Header({ onMenuToggle }: { onMenuToggle?: () => void }) {
                     <button
                       onClick={() => {
                         setUserMenuOpen(false);
-                        signOut({ callbackUrl: "/login" });
+                        setShowSignOutConfirm(true);
                       }}
                       className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] font-medium text-stone-600 hover:bg-stone-50 hover:text-stone-800 transition-colors cursor-pointer"
                     >
@@ -349,6 +352,18 @@ export function Header({ onMenuToggle }: { onMenuToggle?: () => void }) {
       {changePasswordOpen && (
         <ChangePasswordModal onClose={() => setChangePasswordOpen(false)} />
       )}
+
+      <ConfirmModal
+        open={showSignOutConfirm}
+        title="Sign Out"
+        message="Are you sure you want to sign out?"
+        confirmLabel="Sign Out"
+        onConfirm={() => {
+          setShowSignOutConfirm(false);
+          signOut({ callbackUrl: "/login" });
+        }}
+        onCancel={() => setShowSignOutConfirm(false)}
+      />
 
       {/* Mobile search overlay */}
       {mobileSearchOpen && (

@@ -14,7 +14,7 @@ export async function GET(request: Request) {
   }
 
   const entry = await prisma.glossaryEntry.findFirst({
-    where: { english: { equals: word, mode: "insensitive" } },
+    where: { english: { contains: word, mode: "insensitive" } },
     select: { english: true, hausa: true },
   });
 
