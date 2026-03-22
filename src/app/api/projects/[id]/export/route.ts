@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth-helpers";
+import { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, HeadingLevel, WidthType } from "docx";
 
 export async function GET(
   request: Request,
@@ -32,6 +33,8 @@ export async function GET(
     return NextResponse.json({ error: "Project not found" }, { status: 404 });
   }
 
+  const sanitizedTitle = project.title.replace(/[^a-zA-Z0-9]/g, "_");
+
   if (format === "json") {
     const data = project.tasks.map((task) => ({
       id: task.id,
@@ -45,7 +48,60 @@ export async function GET(
     return new NextResponse(JSON.stringify(data, null, 2), {
       headers: {
         "Content-Type": "application/json",
-        "Content-Disposition": `attachment; filename="${project.title.replace(/[^a-zA-Z0-9]/g, "_")}_translations.json"`,
+        "Content-Disposition": `attachment; filename="${sanitizedTitle}_translations.json"`,
+      },
+    });
+  }
+
+  if (format === "docx") {
+    const headerCells = ["Original Content", "Translation", "Status", "Translator", "Reviewer"];
+
+    const doc = new Document({
+      sections: [{
+        children: [
+          new Paragraph({
+            heading: HeadingLevel.HEADING_1,
+            children: [new TextRun({ text: project.title })],
+          }),
+          new Paragraph({ text: "" }),
+          new Table({
+            width: { size: 100, type: WidthType.PERCENTAGE },
+            rows: [
+              new TableRow({
+                tableHeader: true,
+                children: headerCells.map((text) =>
+                  new TableCell({
+                    children: [new Paragraph({ children: [new TextRun({ text, bold: true, size: 20 })] })],
+                  })
+                ),
+              }),
+              ...project.tasks.map((task) =>
+                new TableRow({
+                  children: [
+                    task.originalContent,
+                    task.translatedContent || "",
+                    task.status,
+                    task.assignedTo?.name || "",
+                    task.reviewedBy?.name || "",
+                  ].map((text) =>
+                    new TableCell({
+                      children: [new Paragraph({ children: [new TextRun({ text, size: 20 })] })],
+                    })
+                  ),
+                })
+              ),
+            ],
+          }),
+        ],
+      }],
+    });
+
+    const buffer = await Packer.toBuffer(doc);
+
+    return new NextResponse(new Uint8Array(buffer), {
+      headers: {
+        "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "Content-Disposition": `attachment; filename="${sanitizedTitle}_translations.docx"`,
       },
     });
   }
@@ -71,7 +127,7 @@ export async function GET(
   return new NextResponse(csv, {
     headers: {
       "Content-Type": "text/csv",
-      "Content-Disposition": `attachment; filename="${project.title.replace(/[^a-zA-Z0-9]/g, "_")}_translations.csv"`,
+      "Content-Disposition": `attachment; filename="${sanitizedTitle}_translations.csv"`,
     },
   });
 }

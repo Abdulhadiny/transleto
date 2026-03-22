@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { ConfirmModal } from "@/components/ui/confirm-modal";
 
 interface BulkEntryModalProps {
   open: boolean;
@@ -17,8 +18,32 @@ interface ParsedEntry {
   reviewed?: string;
 }
 
+function normalizeText(text: string): string {
+  return text
+    // Strip BOM (Byte Order Mark)
+    .replace(/^\uFEFF/, "")
+    // Normalize Unicode whitespace (non-breaking space, en/em space, etc.) to regular space
+    .replace(/[\u00A0\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]/g, " ")
+    // Remove zero-width characters
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    // Normalize smart quotes to regular quotes
+    .replace(/[\u201C\u201D]/g, '"')
+    .replace(/[\u2018\u2019]/g, "'")
+    // Normalize line endings
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n");
+}
+
+function cleanValue(s: string): string {
+  return s
+    .replace(/[\u00A0\u2000-\u200A\u202F\u205F\u3000]/g, " ")
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .trim();
+}
+
 function parseFile(text: string, fileName: string): { entries: ParsedEntry[]; errors: number[] } {
-  const lines = text.split("\n").filter((l) => l.trim());
+  const normalized = normalizeText(text);
+  const lines = normalized.split("\n").filter((l) => l.trim());
   if (lines.length === 0) return { entries: [], errors: [] };
 
   // Detect and skip header row
@@ -40,13 +65,13 @@ function parseFile(text: string, fileName: string): { entries: ParsedEntry[]; er
       if (char === '"') {
         inQuotes = !inQuotes;
       } else if (char === "," && !inQuotes) {
-        parts.push(current.trim());
+        parts.push(cleanValue(current));
         current = "";
       } else {
         current += char;
       }
     }
-    parts.push(current.trim());
+    parts.push(cleanValue(current));
 
     if (parts.length < 2 || !parts[0] || !parts[1]) {
       errors.push(i + start + 1);
@@ -69,6 +94,7 @@ export function BulkEntryModal({ open, onClose, onSuccess }: BulkEntryModalProps
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [showConfirm, setShowConfirm] = useState(false);
   const [fileName, setFileName] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -95,15 +121,19 @@ export function BulkEntryModal({ open, onClose, onSuccess }: BulkEntryModalProps
       setPreview(entries);
       setParseErrors(errors);
     };
-    reader.readAsText(file);
+    reader.readAsText(file, "UTF-8");
   }
 
-  async function handleUpload() {
+  function handleUpload() {
     if (preview.length === 0) {
       setError("No entries to upload. Select a file first.");
       return;
     }
+    setShowConfirm(true);
+  }
 
+  async function handleConfirmedUpload() {
+    setShowConfirm(false);
     setLoading(true);
     setError("");
     setSuccess("");
@@ -237,6 +267,14 @@ export function BulkEntryModal({ open, onClose, onSuccess }: BulkEntryModalProps
             {loading ? "Uploading..." : `Upload ${preview.length} Entries`}
           </Button>
         </div>
+        <ConfirmModal
+          open={showConfirm}
+          title="Upload Glossary Entries"
+          message={`Are you sure you want to upload ${preview.length} glossary entries?`}
+          confirmLabel="Upload"
+          onConfirm={handleConfirmedUpload}
+          onCancel={() => setShowConfirm(false)}
+        />
       </div>
     </div>
   );

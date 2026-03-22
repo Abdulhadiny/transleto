@@ -25,7 +25,7 @@ export function ReviewPanel({
 }: ReviewPanelProps) {
   const [editedTranslation, setEditedTranslation] = useState(translatedContent || "");
   const [note, setNote] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<"APPROVED" | "REJECTED" | null>(null);
   const [error, setError] = useState("");
 
   const canReview = status === "SUBMITTED";
@@ -37,7 +37,7 @@ export function ReviewPanel({
       return;
     }
 
-    setLoading(true);
+    setLoading(action);
     setError("");
 
     const translationChanged = editedTranslation !== (translatedContent || "");
@@ -57,7 +57,7 @@ export function ReviewPanel({
       setError(data.error || "Failed to review");
     }
 
-    setLoading(false);
+    setLoading(null);
     onUpdate();
   }
 
@@ -142,16 +142,16 @@ export function ReviewPanel({
           <div className="flex gap-3">
             <Button
               onClick={() => handleReview("APPROVED")}
-              disabled={loading}
+              disabled={!!loading}
             >
-              {loading ? "Processing..." : "Approve"}
+              {loading === "APPROVED" ? "Approving..." : "Approve"}
             </Button>
             <Button
               variant="danger"
               onClick={() => handleReview("REJECTED")}
-              disabled={loading}
+              disabled={!!loading}
             >
-              {loading ? "Processing..." : "Reject with Corrections"}
+              {loading === "REJECTED" ? "Rejecting..." : "Reject with Corrections"}
             </Button>
           </div>
         </>

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Pagination } from "@/components/ui/pagination";
 import { BulkEntryModal } from "@/components/glossary/bulk-entry-modal";
+import { ConfirmModal } from "@/components/ui/confirm-modal";
 
 interface GlossaryEntry {
   id: string;
@@ -30,6 +31,8 @@ export default function GlossaryPage() {
   const [editValue, setEditValue] = useState("");
   const [saving, setSaving] = useState<string | null>(null);
   const [showBulkModal, setShowBulkModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const pageSize = 20;
@@ -99,8 +102,15 @@ export default function GlossaryPage() {
     }
   }
 
-  async function deleteEntry(id: string) {
-    const res = await fetch(`/api/glossary/${id}`, { method: "DELETE" });
+  function deleteEntry(id: string) {
+    setDeletingId(id);
+    setShowDeleteConfirm(true);
+  }
+
+  async function handleConfirmedDelete() {
+    setShowDeleteConfirm(false);
+    if (!deletingId) return;
+    const res = await fetch(`/api/glossary/${deletingId}`, { method: "DELETE" });
     if (res.ok) {
       if (entries.length === 1 && page > 1) {
         setPage(page - 1);
@@ -108,6 +118,7 @@ export default function GlossaryPage() {
         fetchEntries();
       }
     }
+    setDeletingId(null);
   }
 
   function startEditing(id: string, field: EditingCell["field"], currentValue: string) {
@@ -247,6 +258,15 @@ export default function GlossaryPage() {
         open={showBulkModal}
         onClose={() => setShowBulkModal(false)}
         onSuccess={fetchEntries}
+      />
+      <ConfirmModal
+        open={showDeleteConfirm}
+        title="Delete Entry"
+        message="Are you sure you want to delete this glossary entry?"
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={handleConfirmedDelete}
+        onCancel={() => { setShowDeleteConfirm(false); setDeletingId(null); }}
       />
     </div>
   );

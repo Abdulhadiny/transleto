@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/tasks/status-badge";
 import { TranslationEditor } from "@/components/tasks/translation-editor";
 import { ReviewPanel } from "@/components/tasks/review-panel";
@@ -32,6 +33,9 @@ export default function TaskDetailPage() {
   const projectId = params.projectId as string;
   const [task, setTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const exportRef = useRef<HTMLDivElement>(null);
 
   const fetchTask = useCallback(() => {
     fetch(`/api/tasks/${taskId}`)
@@ -46,6 +50,16 @@ export default function TaskDetailPage() {
   useEffect(() => {
     fetchTask();
   }, [fetchTask]);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (exportRef.current && !exportRef.current.contains(e.target as Node)) {
+        setExportMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
 
   if (loading) {
     return (
@@ -65,6 +79,32 @@ export default function TaskDetailPage() {
   }
 
   const role = session?.user?.role;
+
+  async function handleExport(format: string) {
+    setExporting(true);
+    try {
+      const res = await fetch(`/api/tasks/${taskId}/export?format=${format}`);
+      if (!res.ok) throw new Error("Export failed");
+
+      const blob = await res.blob();
+      const disposition = res.headers.get("Content-Disposition") || "";
+      const match = disposition.match(/filename="(.+)"/);
+      const filename = match ? match[1] : `task_translation.${format}`;
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      // silent fail
+    } finally {
+      setExporting(false);
+    }
+  }
 
   return (
     <div className="space-y-6 animate-fade-up">
@@ -136,9 +176,44 @@ export default function TaskDetailPage() {
       {/* Translation / Review / Overview */}
       <Card>
         <CardHeader>
-          <h2 className="text-sm font-semibold text-stone-900">
-            {role === "TRANSLATOR" ? "Translation" : role === "REVIEWER" ? "Review" : "Overview"}
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-stone-900">
+              {role === "TRANSLATOR" ? "Translation" : role === "REVIEWER" ? "Review" : "Overview"}
+            </h2>
+            <div className="relative" ref={exportRef}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setExportMenuOpen((v) => !v)}
+                disabled={exporting}
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                </svg>
+                {exporting ? "Exporting..." : "Export"}
+              </Button>
+              {exportMenuOpen && (
+                <div className="absolute right-0 top-full mt-1 w-32 rounded-lg border border-stone-200/80 bg-white shadow-lg overflow-hidden z-10 animate-fade-up">
+                  {[
+                    { value: "csv", label: "CSV" },
+                    { value: "json", label: "JSON" },
+                    { value: "docx", label: "DOCX" },
+                  ].map((fmt) => (
+                    <button
+                      key={fmt.value}
+                      onClick={() => {
+                        setExportMenuOpen(false);
+                        handleExport(fmt.value);
+                      }}
+                      className="flex w-full items-center px-3 py-2 text-sm text-stone-600 hover:bg-stone-50 hover:text-stone-800 transition-colors cursor-pointer"
+                    >
+                      {fmt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {role === "TRANSLATOR" && task.assignedTo?.id === session?.user?.id ? (

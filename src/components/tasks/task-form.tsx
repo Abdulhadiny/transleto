@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { ConfirmModal } from "@/components/ui/confirm-modal";
 
 interface User {
   id: string;
@@ -22,6 +23,9 @@ export function TaskForm({
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showConfirm, setShowConfirm] = useState(false);
+  const pendingData = useRef<FormData | null>(null);
+  const formRef = useRef<HTMLFormElement | null>(null);
 
   useEffect(() => {
     fetch("/api/users?pageSize=100")
@@ -35,12 +39,18 @@ export function TaskForm({
   const translators = users.filter((u) => u.role === "TRANSLATOR");
   const reviewers = users.filter((u) => u.role === "REVIEWER");
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    pendingData.current = new FormData(e.currentTarget);
+    setShowConfirm(true);
+  }
+
+  async function handleConfirmedSubmit() {
+    setShowConfirm(false);
+    const formData = pendingData.current;
+    if (!formData) return;
     setLoading(true);
     setError("");
-
-    const formData = new FormData(e.currentTarget);
 
     const res = await fetch(`/api/projects/${projectId}/tasks`, {
       method: "POST",
@@ -61,12 +71,12 @@ export function TaskForm({
     }
 
     setLoading(false);
-    (e.target as HTMLFormElement).reset();
+    formRef.current?.reset();
     onCreated();
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form ref={formRef} onSubmit={handleSubmit} className="space-y-5">
       {error && (
         <div className="flex items-center justify-between rounded-lg bg-rose-50 border border-rose-200/60 px-4 py-3 text-sm text-rose-700">
           <div className="flex items-center gap-2">
@@ -122,6 +132,14 @@ export function TaskForm({
       <Button type="submit" disabled={loading}>
         {loading ? "Creating..." : "Add Task"}
       </Button>
+      <ConfirmModal
+        open={showConfirm}
+        title="Add Task"
+        message="Are you sure you want to add this task?"
+        confirmLabel="Add Task"
+        onConfirm={handleConfirmedSubmit}
+        onCancel={() => setShowConfirm(false)}
+      />
     </form>
   );
 }
