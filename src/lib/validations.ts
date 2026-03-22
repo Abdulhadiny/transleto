@@ -90,6 +90,19 @@ export const updateGlossarySchema = z.object({
   status: z.enum(["approved", "proposed"]).optional(),
 });
 
+export const documentUploadSchema = z.object({
+  segments: z.array(z.object({
+    content: z.string().min(1),
+    segmentType: z.string(),
+    orderIndex: z.number().int().min(0),
+  })).min(1),
+  sourceFormat: z.enum(["docx", "html"]),
+  sourceFileName: z.string().min(1),
+  assignedToId: z.string().optional(),
+  reviewedById: z.string().optional(),
+  dueDate: z.string().optional(),
+});
+
 export const bulkGlossarySchema = z.object({
   entries: z.array(createGlossarySchema).min(1, "At least one entry is required"),
 });

@@ -24,7 +24,10 @@ export async function GET(
           assignedTo: { select: { name: true } },
           reviewedBy: { select: { name: true } },
         },
-        orderBy: { createdAt: "asc" },
+        orderBy: [
+          { orderIndex: { sort: "asc", nulls: "last" } },
+          { createdAt: "asc" },
+        ],
       },
     },
   });
@@ -102,6 +105,72 @@ export async function GET(
       headers: {
         "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         "Content-Disposition": `attachment; filename="${sanitizedTitle}_translations.docx"`,
+      },
+    });
+  }
+
+  if (format === "document" && project.sourceFormat) {
+    const sanitizedSource = (project.sourceFileName || "document").replace(/\.[^.]+$/, "").replace(/[^a-zA-Z0-9]/g, "_");
+
+    if (project.sourceFormat === "docx") {
+      const HEADING_MAP: Record<string, typeof HeadingLevel[keyof typeof HeadingLevel]> = {
+        heading1: HeadingLevel.HEADING_1,
+        heading2: HeadingLevel.HEADING_2,
+        heading3: HeadingLevel.HEADING_3,
+        heading4: HeadingLevel.HEADING_4,
+        heading5: HeadingLevel.HEADING_5,
+        heading6: HeadingLevel.HEADING_6,
+      };
+
+      const children = project.tasks.map((task) => {
+        const text = task.translatedContent || task.originalContent;
+        const heading = HEADING_MAP[task.segmentType || ""];
+        if (heading) {
+          return new Paragraph({
+            heading,
+            children: [new TextRun({ text })],
+          });
+        }
+        return new Paragraph({
+          children: [new TextRun({ text })],
+        });
+      });
+
+      const doc = new Document({ sections: [{ children }] });
+      const buffer = await Packer.toBuffer(doc);
+
+      return new NextResponse(new Uint8Array(buffer), {
+        headers: {
+          "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          "Content-Disposition": `attachment; filename="${sanitizedSource}_translated.docx"`,
+        },
+      });
+    }
+
+    // HTML reconstruction
+    const htmlParts = project.tasks.map((task) => {
+      const text = task.translatedContent || task.originalContent;
+      const escaped = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      const type = task.segmentType || "paragraph";
+      if (type.startsWith("heading")) {
+        const level = type.replace("heading", "");
+        return `<h${level}>${escaped}</h${level}>`;
+      }
+      return `<p>${escaped}</p>`;
+    });
+
+    const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>${sanitizedSource} - Translated</title></head>
+<body>
+${htmlParts.join("\n")}
+</body>
+</html>`;
+
+    return new NextResponse(htmlContent, {
+      headers: {
+        "Content-Type": "text/html",
+        "Content-Disposition": `attachment; filename="${sanitizedSource}_translated.html"`,
       },
     });
   }

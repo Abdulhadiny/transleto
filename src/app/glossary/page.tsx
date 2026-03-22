@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -341,9 +341,8 @@ export default function GlossaryPage() {
                 </thead>
                 <tbody className="divide-y divide-stone-50">
                   {entries.map((entry, index) => (
-                    <>
+                    <React.Fragment key={entry.id}>
                       <tr
-                        key={entry.id}
                         className={`group transition-colors hover:bg-stone-50/50 ${saving === entry.id ? "opacity-60" : ""} ${expandedId === entry.id ? "bg-stone-50/30" : ""}`}
                       >
                         <td className="px-6 py-2 text-xs font-medium text-stone-400 tabular-nums">
@@ -417,7 +416,7 @@ export default function GlossaryPage() {
                           </td>
                         </tr>
                       )}
-                    </>
+                    </React.Fragment>
                   ))}
                 </tbody>
               </table>
