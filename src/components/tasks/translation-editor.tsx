@@ -17,6 +17,18 @@ interface GlossaryTerm {
   hausa: string;
 }
 
+interface GlossaryLookupResult {
+  found: boolean;
+  english?: string;
+  hausa?: string;
+  definition?: string | null;
+  partOfSpeech?: string | null;
+  usageExample?: string | null;
+  domain?: string | null;
+  forbiddenTerms?: string[];
+  notes?: string | null;
+}
+
 interface TranslationEditorProps {
   taskId: string;
   originalContent: string;
@@ -42,11 +54,18 @@ export function TranslationEditor({
   const [glossaryTerms, setGlossaryTerms] = useState<GlossaryTerm[]>([]);
   const [suggestError, setSuggestError] = useState("");
   const [glossaryWord, setGlossaryWord] = useState("");
-  const [glossaryLookup, setGlossaryLookup] = useState<string | null>(null);
+  const [glossaryLookup, setGlossaryLookup] = useState<GlossaryLookupResult | null>(null);
+  const [glossaryDetailExpanded, setGlossaryDetailExpanded] = useState(false);
   const [checkingGlossary, setCheckingGlossary] = useState(false);
   const [tmSuggestions, setTmSuggestions] = useState<TMSuggestion[]>([]);
   const [tmLoading, setTmLoading] = useState(false);
   const [tmExpanded, setTmExpanded] = useState(true);
+  const [showProposeForm, setShowProposeForm] = useState(false);
+  const [proposeEnglish, setProposeEnglish] = useState("");
+  const [proposeHausa, setProposeHausa] = useState("");
+  const [proposeDefinition, setProposeDefinition] = useState("");
+  const [proposing, setProposing] = useState(false);
+  const [proposeSuccess, setProposeSuccess] = useState("");
 
   const canEdit = status === "NOT_STARTED" || status === "IN_PROGRESS" || status === "REJECTED";
   const canSubmit = canEdit && translation.trim().length > 0;
@@ -75,22 +94,53 @@ export function TranslationEditor({
     if (!glossaryWord.trim()) return;
     setCheckingGlossary(true);
     setGlossaryLookup(null);
+    setGlossaryDetailExpanded(false);
+    setShowProposeForm(false);
+    setProposeSuccess("");
 
     try {
       const res = await fetch(
         `/api/glossary/lookup?word=${encodeURIComponent(glossaryWord.trim())}`
       );
-      const data = await res.json();
-
-      if (data.found) {
-        setGlossaryLookup(`${data.english} → ${data.hausa}`);
-      } else {
-        setGlossaryLookup("Not available");
+      const data: GlossaryLookupResult = await res.json();
+      setGlossaryLookup(data);
+      if (data.found && (data.definition || data.usageExample)) {
+        setGlossaryDetailExpanded(true);
       }
     } catch {
-      setGlossaryLookup("Error looking up term");
+      setGlossaryLookup({ found: false });
     } finally {
       setCheckingGlossary(false);
+    }
+  }
+
+  async function handleProposeTerm() {
+    if (!proposeEnglish.trim() || !proposeHausa.trim()) return;
+    setProposing(true);
+    setProposeSuccess("");
+
+    try {
+      const res = await fetch("/api/glossary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          english: proposeEnglish.trim(),
+          hausa: proposeHausa.trim(),
+          definition: proposeDefinition.trim() || undefined,
+          status: "proposed",
+        }),
+      });
+      if (res.ok) {
+        setProposeSuccess("Term proposed successfully!");
+        setShowProposeForm(false);
+        setProposeEnglish("");
+        setProposeHausa("");
+        setProposeDefinition("");
+      }
+    } catch {
+      // silent fail
+    } finally {
+      setProposing(false);
     }
   }
 
@@ -380,6 +430,8 @@ export function TranslationEditor({
                 onChange={(e) => {
                   setGlossaryWord(e.target.value);
                   setGlossaryLookup(null);
+                  setShowProposeForm(false);
+                  setProposeSuccess("");
                 }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleCheckGlossary();
@@ -387,15 +439,33 @@ export function TranslationEditor({
                 placeholder="Enter a word..."
                 className="h-7 sm:h-9 rounded-lg border border-stone-200 bg-white px-2 sm:px-3 text-xs sm:text-sm text-stone-700 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-300 w-32 sm:w-44"
               />
-              {glossaryLookup && (
-                <span
-                  className={`inline-flex items-center gap-1 rounded-full px-2 sm:px-2.5 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium ${
-                    glossaryLookup === "Not available" || glossaryLookup === "Error looking up term"
-                      ? "bg-stone-100 text-stone-600"
-                      : "bg-emerald-50 border border-emerald-200 text-emerald-700"
-                  }`}
-                >
-                  {glossaryLookup}
+              {glossaryLookup && glossaryLookup.found && (
+                <span className="inline-flex items-center gap-1 rounded-full px-2 sm:px-2.5 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium bg-emerald-50 border border-emerald-200 text-emerald-700">
+                  {glossaryLookup.english} → {glossaryLookup.hausa}
+                  {(glossaryLookup.definition || glossaryLookup.usageExample) && (
+                    <button
+                      onClick={() => setGlossaryDetailExpanded(!glossaryDetailExpanded)}
+                      className="ml-0.5 hover:opacity-70"
+                      title="Toggle details"
+                    >
+                      <svg className={`h-3 w-3 transition-transform ${glossaryDetailExpanded ? "rotate-180" : ""}`} viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setGlossaryLookup(null)}
+                    className="ml-0.5 hover:opacity-70"
+                  >
+                    <svg className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                    </svg>
+                  </button>
+                </span>
+              )}
+              {glossaryLookup && !glossaryLookup.found && (
+                <span className="inline-flex items-center gap-1 rounded-full px-2 sm:px-2.5 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium bg-stone-100 text-stone-600">
+                  Not available
                   <button
                     onClick={() => setGlossaryLookup(null)}
                     className="ml-0.5 hover:opacity-70"
@@ -407,6 +477,108 @@ export function TranslationEditor({
                 </span>
               )}
             </div>
+
+            {/* Enriched glossary detail panel */}
+            {glossaryLookup?.found && glossaryDetailExpanded && (
+              <div className="rounded-lg border border-emerald-200/60 bg-emerald-50 px-4 py-3 space-y-2">
+                {glossaryLookup.partOfSpeech && (
+                  <p className="text-xs text-emerald-600">
+                    <span className="font-medium">Part of Speech:</span> {glossaryLookup.partOfSpeech}
+                  </p>
+                )}
+                {glossaryLookup.definition && (
+                  <p className="text-xs text-emerald-700">
+                    <span className="font-medium">Definition:</span> {glossaryLookup.definition}
+                  </p>
+                )}
+                {glossaryLookup.usageExample && (
+                  <p className="text-xs text-emerald-700 italic">
+                    <span className="font-medium not-italic">Example:</span> {glossaryLookup.usageExample}
+                  </p>
+                )}
+                {glossaryLookup.domain && (
+                  <p className="text-xs text-emerald-600">
+                    <span className="font-medium">Domain:</span> {glossaryLookup.domain}
+                  </p>
+                )}
+                {glossaryLookup.notes && (
+                  <p className="text-xs text-emerald-600">
+                    <span className="font-medium">Notes:</span> {glossaryLookup.notes}
+                  </p>
+                )}
+                {glossaryLookup.forbiddenTerms && glossaryLookup.forbiddenTerms.length > 0 && (
+                  <div className="flex flex-wrap gap-1 items-center">
+                    <span className="text-xs font-medium text-rose-600">Forbidden:</span>
+                    {glossaryLookup.forbiddenTerms.map((term, i) => (
+                      <span key={i} className="inline-flex items-center rounded-full bg-rose-50 border border-rose-200 px-2 py-0.5 text-[10px] text-rose-700">
+                        {term}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Propose term button and form */}
+            {glossaryLookup && !glossaryLookup.found && canEdit && !showProposeForm && !proposeSuccess && (
+              <button
+                onClick={() => {
+                  setShowProposeForm(true);
+                  setProposeEnglish(glossaryWord.trim());
+                }}
+                className="text-xs text-amber-700 hover:text-amber-900 underline underline-offset-2"
+              >
+                Propose this term for the glossary
+              </button>
+            )}
+
+            {proposeSuccess && (
+              <p className="text-xs text-emerald-600 font-medium">{proposeSuccess}</p>
+            )}
+
+            {showProposeForm && (
+              <div className="rounded-lg border border-amber-200/60 bg-amber-50 px-4 py-3 space-y-2">
+                <p className="text-xs font-medium text-amber-800">Propose New Term</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="text"
+                    value={proposeEnglish}
+                    onChange={(e) => setProposeEnglish(e.target.value)}
+                    placeholder="English"
+                    className="rounded-md border border-amber-200 bg-white px-2.5 py-1.5 text-xs text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                  />
+                  <input
+                    type="text"
+                    value={proposeHausa}
+                    onChange={(e) => setProposeHausa(e.target.value)}
+                    placeholder="Hausa"
+                    className="rounded-md border border-amber-200 bg-white px-2.5 py-1.5 text-xs text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                  />
+                </div>
+                <input
+                  type="text"
+                  value={proposeDefinition}
+                  onChange={(e) => setProposeDefinition(e.target.value)}
+                  placeholder="Definition (optional)"
+                  className="w-full rounded-md border border-amber-200 bg-white px-2.5 py-1.5 text-xs text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleProposeTerm}
+                    disabled={proposing || !proposeEnglish.trim() || !proposeHausa.trim()}
+                    className="rounded-md bg-amber-600 px-3 py-1 text-xs font-medium text-white hover:bg-amber-700 disabled:opacity-50 transition-colors"
+                  >
+                    {proposing ? "Proposing..." : "Propose"}
+                  </button>
+                  <button
+                    onClick={() => setShowProposeForm(false)}
+                    className="rounded-md bg-white border border-amber-200 px-3 py-1 text-xs font-medium text-stone-600 hover:bg-stone-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end gap-2 sm:gap-3">

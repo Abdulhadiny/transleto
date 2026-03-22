@@ -68,12 +68,26 @@ export const createGlossarySchema = z.object({
   english: z.string(),
   hausa: z.string(),
   reviewed: z.string().optional(),
+  definition: z.string().optional(),
+  partOfSpeech: z.string().optional(),
+  usageExample: z.string().optional(),
+  domain: z.string().optional(),
+  forbiddenTerms: z.array(z.string()).optional(),
+  notes: z.string().optional(),
+  status: z.enum(["approved", "proposed"]).optional(),
 });
 
 export const updateGlossarySchema = z.object({
   english: z.string().optional(),
   hausa: z.string().optional(),
   reviewed: z.string().optional(),
+  definition: z.string().optional(),
+  partOfSpeech: z.string().optional(),
+  usageExample: z.string().optional(),
+  domain: z.string().optional(),
+  forbiddenTerms: z.array(z.string()).optional(),
+  notes: z.string().optional(),
+  status: z.enum(["approved", "proposed"]).optional(),
 });
 
 export const bulkGlossarySchema = z.object({
