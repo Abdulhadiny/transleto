@@ -10,6 +10,7 @@ import { Select } from "@/components/ui/select";
 import { TaskList } from "@/components/tasks/task-list";
 import { TaskForm } from "@/components/tasks/task-form";
 import { BulkUpload } from "@/components/tasks/bulk-upload";
+import { DocumentUpload } from "@/components/tasks/document-upload";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Pagination } from "@/components/ui/pagination";
@@ -29,6 +30,8 @@ interface Project {
   description?: string | null;
   sourceLang: string;
   targetLang: string;
+  sourceFormat?: string | null;
+  sourceFileName?: string | null;
   createdBy: { name: string };
   tasks: Array<{
     id: string;
@@ -182,6 +185,15 @@ export default function ProjectDetailPage() {
 
           <Card>
             <CardHeader>
+              <h2 className="text-sm font-semibold text-stone-900">Upload Document</h2>
+            </CardHeader>
+            <CardContent>
+              <DocumentUpload projectId={projectId} onCreated={() => { setTaskPage(1); fetchProject(1); }} />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
               <h2 className="text-sm font-semibold text-stone-900">Export Translations</h2>
             </CardHeader>
             <CardContent>
@@ -193,10 +205,13 @@ export default function ProjectDetailPage() {
                       { value: "csv", label: "CSV" },
                       { value: "json", label: "JSON" },
                       { value: "docx", label: "DOCX" },
+                      ...(project.sourceFormat
+                        ? [{ value: "document", label: "Reconstructed Document" }]
+                        : []),
                     ]}
                     value={exportFormat}
                     onChange={(e) => setExportFormat(e.target.value)}
-                    className="w-32"
+                    className="w-52"
                   />
                 </div>
                 <div>

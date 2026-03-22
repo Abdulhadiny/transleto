@@ -50,7 +50,10 @@ export async function GET(
         assignedTo: { select: { id: true, name: true } },
         reviewedBy: { select: { id: true, name: true } },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: [
+        { orderIndex: { sort: "asc", nulls: "last" } },
+        { createdAt: "desc" },
+      ],
       skip,
       take: taskPageSize,
     }),
