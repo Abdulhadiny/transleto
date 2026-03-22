@@ -46,6 +46,7 @@ export const createTaskSchema = z.object({
 });
 
 export const updateTaskSchema = z.object({
+  originalContent: z.string().min(1).optional(),
   translatedContent: z.string().optional(),
   status: z.enum(["NOT_STARTED", "IN_PROGRESS", "SUBMITTED", "APPROVED", "REJECTED"]).optional(),
   assignedToId: z.string().nullable().optional(),

@@ -45,13 +45,13 @@ export function ActivityFeed() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/activity")
+    fetch("/api/activity?limit=15")
       .then((res) => {
         if (!res.ok) throw new Error();
         return res.json();
       })
       .then((data) => {
-        if (Array.isArray(data)) setLogs(data);
+        if (Array.isArray(data.logs)) setLogs(data.logs);
         setLoading(false);
       })
       .catch(() => setLoading(false));
