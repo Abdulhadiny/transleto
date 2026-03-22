@@ -45,11 +45,20 @@ function GlossaryIcon() {
   );
 }
 
+function AuditIcon() {
+  return (
+    <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+}
+
 const navItems: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: <DashboardIcon />, roles: ["ADMIN", "TRANSLATOR", "REVIEWER"] },
   { href: "/dashboard/projects", label: "Projects", icon: <ProjectsIcon />, roles: ["ADMIN", "TRANSLATOR", "REVIEWER"] },
   { href: "/glossary", label: "Glossary", icon: <GlossaryIcon />, roles: ["ADMIN", "TRANSLATOR", "REVIEWER"] },
   { href: "/dashboard/users", label: "Users", icon: <UsersIcon />, roles: ["ADMIN"] },
+  { href: "/dashboard/audit", label: "Audit Log", icon: <AuditIcon />, roles: ["ADMIN"] },
 ];
 
 export function Sidebar({ open, onClose }: { open?: boolean; onClose?: () => void }) {

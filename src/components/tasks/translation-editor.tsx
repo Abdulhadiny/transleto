@@ -1,8 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+
+interface TMSuggestion {
+  id: string;
+  sourceText: string;
+  targetText: string;
+  similarity: number;
+  usageCount: number;
+}
 
 interface GlossaryTerm {
   english: string;
@@ -36,9 +44,32 @@ export function TranslationEditor({
   const [glossaryWord, setGlossaryWord] = useState("");
   const [glossaryLookup, setGlossaryLookup] = useState<string | null>(null);
   const [checkingGlossary, setCheckingGlossary] = useState(false);
+  const [tmSuggestions, setTmSuggestions] = useState<TMSuggestion[]>([]);
+  const [tmLoading, setTmLoading] = useState(false);
+  const [tmExpanded, setTmExpanded] = useState(true);
 
   const canEdit = status === "NOT_STARTED" || status === "IN_PROGRESS" || status === "REJECTED";
   const canSubmit = canEdit && translation.trim().length > 0;
+
+  useEffect(() => {
+    if (!originalContent) return;
+    setTmLoading(true);
+    fetch(`/api/translation-memory/search?q=${encodeURIComponent(originalContent)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        const matches = (data.results || []).filter(
+          (m: TMSuggestion) => m.similarity >= 0.5
+        );
+        setTmSuggestions(matches);
+      })
+      .catch(() => setTmSuggestions([]))
+      .finally(() => setTmLoading(false));
+  }, [originalContent]);
+
+  function handleApplyTM(suggestion: TMSuggestion) {
+    setTranslation(suggestion.targetText);
+    fetch(`/api/translation-memory/${suggestion.id}/use`, { method: "POST" }).catch(() => {});
+  }
 
   async function handleCheckGlossary() {
     if (!glossaryWord.trim()) return;
@@ -196,6 +227,78 @@ export function TranslationEditor({
           />
         </div>
       </div>
+
+      {tmLoading && (
+        <div className="flex items-center gap-2 rounded-lg border border-sky-200/60 bg-sky-50 px-4 py-3 text-sm text-sky-700">
+          <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          Searching translation memory...
+        </div>
+      )}
+
+      {!tmLoading && tmSuggestions.length > 0 && (
+        <div className="rounded-lg border border-sky-200/60 bg-sky-50">
+          <button
+            onClick={() => setTmExpanded(!tmExpanded)}
+            className="flex w-full items-center justify-between px-4 py-3"
+          >
+            <p className="text-sm font-medium text-sky-800">
+              Translation Memory ({tmSuggestions.length} {tmSuggestions.length === 1 ? "match" : "matches"})
+            </p>
+            <svg
+              className={`h-4 w-4 text-sky-500 transition-transform ${tmExpanded ? "rotate-180" : ""}`}
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+            </svg>
+          </button>
+          {tmExpanded && (
+            <div className="space-y-2 px-4 pb-3">
+              {tmSuggestions.map((s) => {
+                const pct = Math.round(s.similarity * 100);
+                const badgeClass =
+                  pct === 100
+                    ? "bg-emerald-100 border-emerald-200 text-emerald-700"
+                    : pct >= 85
+                      ? "bg-amber-100 border-amber-200 text-amber-700"
+                      : "bg-stone-100 border-stone-200 text-stone-600";
+                return (
+                  <div
+                    key={s.id}
+                    className="flex items-start gap-3 rounded-md border border-sky-100 bg-white p-3"
+                  >
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${badgeClass}`}>
+                          {pct}%
+                        </span>
+                        {s.usageCount > 0 && (
+                          <span className="text-[10px] text-stone-400">
+                            used {s.usageCount}x
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-stone-500 truncate">{s.sourceText}</p>
+                      <p className="text-sm text-stone-800">{s.targetText}</p>
+                    </div>
+                    {canEdit && (
+                      <button
+                        onClick={() => handleApplyTM(s)}
+                        className="shrink-0 rounded-md bg-sky-100 px-2.5 py-1 text-xs font-medium text-sky-700 hover:bg-sky-200 transition-colors"
+                      >
+                        Apply
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {glossaryTerms.length > 0 && (
         <div className="rounded-lg bg-amber-50 border border-amber-200/60 px-4 py-3">

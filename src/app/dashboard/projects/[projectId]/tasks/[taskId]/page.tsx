@@ -235,24 +235,11 @@ export default function TaskDetailPage() {
               onUpdate={fetchTask}
             />
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-              <div>
-                <label className="block text-sm font-medium text-stone-600 mb-1.5">
-                  Original Content
-                </label>
-                <div className="rounded-lg border border-stone-200 bg-stone-50 p-4 text-sm min-h-[160px] whitespace-pre-wrap text-stone-700 leading-relaxed">
-                  {task.originalContent}
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-stone-600 mb-1.5">
-                  Translation
-                </label>
-                <div className="rounded-lg border border-sky-200 bg-sky-50 p-4 text-sm min-h-[160px] whitespace-pre-wrap text-stone-700 leading-relaxed">
-                  {task.translatedContent || "No translation yet."}
-                </div>
-              </div>
-            </div>
+            <AdminOverview
+              task={task}
+              isAdmin={role === "ADMIN"}
+              onUpdate={fetchTask}
+            />
           )}
         </CardContent>
       </Card>
@@ -266,6 +253,113 @@ export default function TaskDetailPage() {
           <CommentThread taskId={task.id} />
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function AdminOverview({
+  task,
+  isAdmin,
+  onUpdate,
+}: {
+  task: Task;
+  isAdmin: boolean;
+  onUpdate: () => void;
+}) {
+  const canEditOriginal = isAdmin && task.status === "NOT_STARTED";
+  const [editing, setEditing] = useState(false);
+  const [editedContent, setEditedContent] = useState(task.originalContent);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleSave() {
+    setSaving(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/tasks/${task.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ originalContent: editedContent }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || "Failed to save");
+        return;
+      }
+      setEditing(false);
+      onUpdate();
+    } catch {
+      setError("Network error");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <div>
+        <div className="flex items-center justify-between mb-1.5">
+          <label className="block text-sm font-medium text-stone-600">
+            Original Content
+          </label>
+          {canEditOriginal && !editing && (
+            <button
+              onClick={() => setEditing(true)}
+              className="inline-flex items-center gap-1 text-xs text-amber-600 hover:text-amber-700 transition-colors"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
+              </svg>
+              Edit
+            </button>
+          )}
+        </div>
+        {editing ? (
+          <div className="space-y-2">
+            <textarea
+              value={editedContent}
+              onChange={(e) => setEditedContent(e.target.value)}
+              className="block w-full rounded-lg border border-amber-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 resize-y min-h-[160px]"
+            />
+            {error && (
+              <p className="text-xs text-rose-600">{error}</p>
+            )}
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  setEditing(false);
+                  setEditedContent(task.originalContent);
+                  setError("");
+                }}
+                disabled={saving}
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleSave}
+                disabled={saving || !editedContent.trim()}
+              >
+                {saving ? "Saving..." : "Save"}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-lg border border-stone-200 bg-stone-50 p-4 text-sm min-h-[160px] whitespace-pre-wrap text-stone-700 leading-relaxed">
+            {task.originalContent}
+          </div>
+        )}
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-stone-600 mb-1.5">
+          Translation
+        </label>
+        <div className="rounded-lg border border-sky-200 bg-sky-50 p-4 text-sm min-h-[160px] whitespace-pre-wrap text-stone-700 leading-relaxed">
+          {task.translatedContent || "No translation yet."}
+        </div>
+      </div>
     </div>
   );
 }

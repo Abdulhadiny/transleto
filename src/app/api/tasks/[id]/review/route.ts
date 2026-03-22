@@ -4,6 +4,7 @@ import { getSessionOrUnauthorized } from "@/lib/auth-helpers";
 import { reviewTaskSchema } from "@/lib/validations";
 import { logActivity } from "@/lib/activity";
 import { createNotification } from "@/lib/notifications";
+import { upsertTranslationMemory } from "@/lib/translation-memory";
 
 export async function PATCH(
   request: Request,
@@ -65,8 +66,12 @@ export async function PATCH(
     taskId: id,
   });
 
+  const project = await prisma.project.findUnique({
+    where: { id: task.projectId },
+    select: { title: true, sourceLang: true, targetLang: true },
+  });
+
   if (task.assignedToId) {
-    const project = await prisma.project.findUnique({ where: { id: task.projectId }, select: { title: true } });
     const contentPreview = `${task.originalContent.slice(0, 50)}${task.originalContent.length > 50 ? "..." : ""}`;
     await createNotification({
       type: status === "APPROVED" ? "TASK_APPROVED" : "TASK_REJECTED",
@@ -78,6 +83,18 @@ export async function PATCH(
       taskId: id,
       projectId: task.projectId,
     });
+  }
+
+  // Fire-and-forget TM upsert on approval
+  if (status === "APPROVED" && (translatedContent || task.translatedContent) && project) {
+    upsertTranslationMemory({
+      sourceText: task.originalContent,
+      targetText: (translatedContent || task.translatedContent)!,
+      sourceLang: project.sourceLang,
+      targetLang: project.targetLang,
+      projectId: task.projectId,
+      taskId: id,
+    }).catch((err) => console.error("Failed to upsert TM entry:", err));
   }
 
   return NextResponse.json(updated);

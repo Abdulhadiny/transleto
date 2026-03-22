@@ -64,6 +64,13 @@ export async function PATCH(
 
   // Admin can update any field
   if (user.role === "ADMIN") {
+    if (parsed.data.originalContent && task.status !== "NOT_STARTED") {
+      return NextResponse.json(
+        { error: "Original content can only be edited before a translator starts working" },
+        { status: 400 }
+      );
+    }
+
     const { dueDate, ...rest } = parsed.data;
     const updated = await prisma.task.update({
       where: { id },
