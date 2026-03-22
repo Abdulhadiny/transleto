@@ -14,13 +14,25 @@ export async function GET(request: Request) {
   }
 
   const entry = await prisma.glossaryEntry.findFirst({
-    where: { english: { contains: word, mode: "insensitive" } },
-    select: { english: true, hausa: true },
+    where: {
+      english: { contains: word, mode: "insensitive" },
+      status: "approved",
+    },
+    select: {
+      english: true,
+      hausa: true,
+      definition: true,
+      partOfSpeech: true,
+      usageExample: true,
+      domain: true,
+      forbiddenTerms: true,
+      notes: true,
+    },
   });
 
   if (!entry) {
     return NextResponse.json({ found: false });
   }
 
-  return NextResponse.json({ found: true, english: entry.english, hausa: entry.hausa });
+  return NextResponse.json({ found: true, ...entry });
 }

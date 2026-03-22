@@ -16,6 +16,10 @@ interface ParsedEntry {
   english: string;
   hausa: string;
   reviewed?: string;
+  definition?: string;
+  partOfSpeech?: string;
+  usageExample?: string;
+  domain?: string;
 }
 
 function normalizeText(text: string): string {
@@ -82,6 +86,10 @@ function parseFile(text: string, fileName: string): { entries: ParsedEntry[]; er
       english: parts[0],
       hausa: parts[1],
       ...(parts[2] ? { reviewed: parts[2] } : {}),
+      ...(parts[3] ? { definition: parts[3] } : {}),
+      ...(parts[4] ? { partOfSpeech: parts[4] } : {}),
+      ...(parts[5] ? { usageExample: parts[5] } : {}),
+      ...(parts[6] ? { domain: parts[6] } : {}),
     });
   });
 
@@ -182,8 +190,8 @@ export function BulkEntryModal({ open, onClose, onSuccess }: BulkEntryModalProps
       <div className="relative z-10 w-full max-w-lg rounded-xl border border-stone-200 bg-white p-6 shadow-xl">
         <h2 className="text-lg font-semibold text-stone-900">Bulk Upload Glossary Entries</h2>
         <p className="mt-1 text-sm text-stone-500">
-          Upload a CSV file with columns: <code className="rounded bg-stone-100 px-1 py-0.5 text-xs">english,hausa,reviewed</code>{" "}
-          (reviewed column is optional)
+          Upload a CSV file with columns: <code className="rounded bg-stone-100 px-1 py-0.5 text-xs">english,hausa,reviewed,definition,partOfSpeech,usageExample,domain</code>{" "}
+          (only english and hausa are required)
         </p>
 
         <div className="mt-4 space-y-4">
@@ -226,7 +234,7 @@ export function BulkEntryModal({ open, onClose, onSuccess }: BulkEntryModalProps
               )}
             </div>
             <p className="mt-1.5 text-xs text-stone-400">
-              .csv or .txt with comma-separated values: english,hausa,reviewed
+              .csv or .txt with comma-separated values: english,hausa,reviewed,definition,partOfSpeech,usageExample,domain
             </p>
           </div>
 
@@ -250,6 +258,12 @@ export function BulkEntryModal({ open, onClose, onSuccess }: BulkEntryModalProps
                       {entry.hausa}
                       {entry.reviewed && (
                         <span className="ml-2 text-xs text-stone-400">({entry.reviewed})</span>
+                      )}
+                      {entry.domain && (
+                        <span className="ml-2 text-[10px] text-stone-400 bg-stone-100 rounded px-1 py-0.5">{entry.domain}</span>
+                      )}
+                      {entry.partOfSpeech && (
+                        <span className="ml-1 text-[10px] text-stone-400 italic">{entry.partOfSpeech}</span>
                       )}
                     </li>
                   ))}
