@@ -52,6 +52,7 @@ export default function ProjectDetailPage() {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("");
   const [searchFilter, setSearchFilter] = useState("");
+  const [addMode, setAddMode] = useState<"single" | "bulk" | "document">("single");
   const [exportFormat, setExportFormat] = useState("csv");
   const [exportStatus, setExportStatus] = useState("APPROVED");
   const [exporting, setExporting] = useState(false);
@@ -167,28 +168,40 @@ export default function ProjectDetailPage() {
         <>
           <Card>
             <CardHeader>
-              <h2 className="text-sm font-semibold text-stone-900">Add Task</h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-stone-900">Add Tasks</h2>
+                <div className="flex rounded-lg border border-stone-200 bg-stone-50 p-0.5">
+                  {([
+                    { value: "single", label: "Single" },
+                    { value: "bulk", label: "Bulk (.txt/.csv)" },
+                    { value: "document", label: "Document (.docx/.html)" },
+                  ] as const).map((tab) => (
+                    <button
+                      key={tab.value}
+                      type="button"
+                      onClick={() => setAddMode(tab.value)}
+                      className={`rounded-md px-3 py-1 text-xs font-medium transition-all ${
+                        addMode === tab.value
+                          ? "bg-white text-stone-900 shadow-sm"
+                          : "text-stone-500 hover:text-stone-700"
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
-              <TaskForm projectId={projectId} onCreated={() => { setTaskPage(1); fetchProject(1); }} />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <h2 className="text-sm font-semibold text-stone-900">Bulk Upload Tasks</h2>
-            </CardHeader>
-            <CardContent>
-              <BulkUpload projectId={projectId} onCreated={() => { setTaskPage(1); fetchProject(1); }} />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <h2 className="text-sm font-semibold text-stone-900">Upload Document</h2>
-            </CardHeader>
-            <CardContent>
-              <DocumentUpload projectId={projectId} onCreated={() => { setTaskPage(1); fetchProject(1); }} />
+              {addMode === "single" && (
+                <TaskForm projectId={projectId} onCreated={() => { setTaskPage(1); fetchProject(1); }} />
+              )}
+              {addMode === "bulk" && (
+                <BulkUpload projectId={projectId} onCreated={() => { setTaskPage(1); fetchProject(1); }} />
+              )}
+              {addMode === "document" && (
+                <DocumentUpload projectId={projectId} onCreated={() => { setTaskPage(1); fetchProject(1); }} />
+              )}
             </CardContent>
           </Card>
 

@@ -200,36 +200,40 @@ export function BulkUpload({
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Select
-          id="assignedToId"
-          name="assignedToId"
-          label="Assign All to Translator"
-          options={[
-            { value: "", label: "Unassigned" },
-            ...translators.map((u) => ({ value: u.id, label: u.name })),
-          ]}
-        />
-        <Select
-          id="reviewedById"
-          name="reviewedById"
-          label="Assign All to Reviewer"
-          options={[
-            { value: "", label: "Unassigned" },
-            ...reviewers.map((u) => ({ value: u.id, label: u.name })),
-          ]}
-        />
-        <Input
-          id="dueDate"
-          name="dueDate"
-          label="Due Date (All)"
-          type="date"
-        />
-      </div>
+      {preview.length > 0 && (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Select
+              id="assignedToId"
+              name="assignedToId"
+              label="Assign All to Translator"
+              options={[
+                { value: "", label: "Unassigned" },
+                ...translators.map((u) => ({ value: u.id, label: u.name })),
+              ]}
+            />
+            <Select
+              id="reviewedById"
+              name="reviewedById"
+              label="Assign All to Reviewer"
+              options={[
+                { value: "", label: "Unassigned" },
+                ...reviewers.map((u) => ({ value: u.id, label: u.name })),
+              ]}
+            />
+            <Input
+              id="dueDate"
+              name="dueDate"
+              label="Due Date (All)"
+              type="date"
+            />
+          </div>
 
-      <Button type="submit" disabled={loading || preview.length === 0}>
-        {loading ? "Uploading..." : `Upload ${preview.length} Tasks`}
-      </Button>
+          <Button type="submit" disabled={loading}>
+            {loading ? "Uploading..." : `Upload ${preview.length} Tasks`}
+          </Button>
+        </>
+      )}
       <ConfirmModal
         open={showConfirm}
         title="Upload Tasks"
