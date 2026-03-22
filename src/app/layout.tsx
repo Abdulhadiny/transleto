@@ -28,7 +28,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${dmSans.variable} ${playfair.variable} antialiased`}>
+      <body suppressHydrationWarning className={`${dmSans.variable} ${playfair.variable} antialiased`}>
         <SessionProvider>{children}</SessionProvider>
       </body>
     </html>
